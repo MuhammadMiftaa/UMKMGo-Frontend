@@ -1,0 +1,211 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
+import { Badge } from "../components/ui/badge"
+import { mockApplications } from "../data/mockData"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import { Link } from "react-router-dom"
+
+const statusColors = {
+  masuk: "bg-blue-500",
+  screening: "bg-yellow-500",
+  penilaian: "bg-orange-500",
+  keputusan: "bg-purple-500",
+  disetujui: "bg-green-500",
+  ditolak: "bg-red-500",
+  revisi: "bg-gray-500",
+  dibatalkan: "bg-gray-400",
+}
+
+const statusLabels = {
+  masuk: "Masuk",
+  screening: "Screening",
+  penilaian: "Penilaian",
+  keputusan: "Keputusan",
+  disetujui: "Disetujui",
+  ditolak: "Ditolak",
+  revisi: "Revisi",
+  dibatalkan: "Dibatalkan",
+}
+
+export function DashboardPage() {
+  // Calculate statistics
+  const totalApplications = mockApplications.length
+  const pendingApplications = mockApplications.filter((app) =>
+    ["masuk", "screening", "penilaian", "keputusan"].includes(app.status),
+  ).length
+  const approvedApplications = mockApplications.filter((app) => app.status === "disetujui").length
+  const rejectedApplications = mockApplications.filter((app) => app.status === "ditolak").length
+
+  // Status distribution data
+  const statusData = Object.entries(
+    mockApplications.reduce(
+      (acc, app) => {
+        acc[app.status] = (acc[app.status] || 0) + 1
+        return acc
+      },
+      {} as Record<string, number>,
+    ),
+  ).map(([status, count]) => ({
+    name: statusLabels[status as keyof typeof statusLabels],
+    value: count,
+    color: statusColors[status as keyof typeof statusColors],
+  }))
+
+  // Type distribution data
+  const typeData = Object.entries(
+    mockApplications.reduce(
+      (acc, app) => {
+        acc[app.type] = (acc[app.type] || 0) + 1
+        return acc
+      },
+      {} as Record<string, number>,
+    ),
+  ).map(([type, count]) => ({
+    name: type.charAt(0).toUpperCase() + type.slice(1),
+    count,
+  }))
+
+  const COLORS = ["#6366f1", "#f59e0b", "#10b981"]
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">Ringkasan pengajuan dan statistik UMKM</p>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Pengajuan</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalApplications}</div>
+            <p className="text-xs text-muted-foreground">Semua pengajuan yang masuk</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Dalam Proses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pendingApplications}</div>
+            <p className="text-xs text-muted-foreground">Menunggu tindakan</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Disetujui</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{approvedApplications}</div>
+            <p className="text-xs text-muted-foreground">Pengajuan berhasil</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Ditolak</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{rejectedApplications}</div>
+            <p className="text-xs text-muted-foreground">Pengajuan ditolak</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Distribusi Status</CardTitle>
+            <CardDescription>Sebaran status pengajuan saat ini</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value}`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Jenis Pengajuan</CardTitle>
+            <CardDescription>Distribusi berdasarkan jenis program</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={typeData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#6366f1" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Applications */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Pengajuan Terbaru</CardTitle>
+          <CardDescription>5 pengajuan terakhir yang masuk</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {mockApplications.slice(0, 5).map((application) => (
+              <Link key={application.id} to={`/application/${application.id}`}>
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                  <div className="space-y-1">
+                    <p className="font-medium">{application.applicantName}</p>
+                    <p className="text-sm text-muted-foreground">{application.businessName}</p>
+                    <p className="text-xs text-muted-foreground">ID: {application.id}</p>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <Badge
+                      variant={
+                        application.status === "disetujui"
+                          ? "success"
+                          : application.status === "ditolak"
+                            ? "destructive"
+                            : application.status === "revisi"
+                              ? "warning"
+                              : "default"
+                      }
+                    >
+                      {statusLabels[application.status]}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground capitalize">{application.type}</p>
+                    {application.score && (
+                      <p className="text-xs font-medium text-primary">Skor: {application.score}/100</p>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
