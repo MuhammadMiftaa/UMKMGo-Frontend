@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { useAuth } from "../contexts/AuthContext"
-import { Settings, Users, FileText, Database } from "lucide-react"
+import { Settings, Users, FileText, Database, Target } from "lucide-react"
 import { Link } from "react-router-dom"
 
 export function SettingsPage() {
@@ -20,7 +20,7 @@ export function SettingsPage() {
       <div className="grid gap-6 md:grid-cols-2">
         {/* User Management - Superadmin only */}
         {user?.role === "superadmin" && (
-          <Card>
+          <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
@@ -74,8 +74,38 @@ export function SettingsPage() {
           </Card>
         )}
 
+        {user?.role === "superadmin" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Konfigurasi Cutoff Scoring
+              </CardTitle>
+              <CardDescription>Atur batas skor untuk status pengajuan</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Batas Lolos (≥)</label>
+                <Input type="number" defaultValue="75" />
+                <p className="text-xs text-muted-foreground">Skor minimum untuk status "Lolos"</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Batas Hold (≥)</label>
+                <Input type="number" defaultValue="55" />
+                <p className="text-xs text-muted-foreground">Skor minimum untuk status "Hold" (55-74)</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Batas Gagal (&lt;)</label>
+                <Input type="number" defaultValue="55" disabled />
+                <p className="text-xs text-muted-foreground">Skor di bawah 55 akan berstatus "Gagal"</p>
+              </div>
+              <Button className="w-full">Simpan Cutoff</Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Document Templates */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -95,7 +125,7 @@ export function SettingsPage() {
             </Button>
             {user?.role === "superadmin" && <Button className="w-full">Edit Template</Button>}
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* SLA Configuration - Superadmin only */}
         {user?.role === "superadmin" && (
@@ -121,27 +151,6 @@ export function SettingsPage() {
                 <Input type="number" defaultValue="2" />
               </div>
               <Button className="w-full">Simpan SLA</Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Integration Settings - Superadmin only */}
-        {user?.role === "superadmin" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Integrasi Sistem</CardTitle>
-              <CardDescription>Konfigurasi integrasi dengan sistem eksternal</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button variant="outline" className="w-full bg-transparent">
-                Konfigurasi Payment Gateway
-              </Button>
-              <Button variant="outline" className="w-full bg-transparent">
-                Integrasi Dukcapil (NIK)
-              </Button>
-              <Button variant="outline" className="w-full bg-transparent">
-                Integrasi OSS (NIB)
-              </Button>
             </CardContent>
           </Card>
         )}

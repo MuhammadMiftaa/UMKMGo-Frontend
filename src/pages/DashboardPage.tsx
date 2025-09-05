@@ -1,8 +1,31 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { Badge } from "../components/ui/badge"
-import { mockApplications } from "../data/mockData"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { Link } from "react-router-dom"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { mockApplications } from "../data/mockData";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "../components/ui/chart";
+import { Link } from "react-router-dom";
 
 const statusColors = {
   masuk: "bg-blue-500",
@@ -13,7 +36,7 @@ const statusColors = {
   ditolak: "bg-red-500",
   revisi: "bg-gray-500",
   dibatalkan: "bg-gray-400",
-}
+};
 
 const statusLabels = {
   masuk: "Masuk",
@@ -24,64 +47,81 @@ const statusLabels = {
   ditolak: "Ditolak",
   revisi: "Revisi",
   dibatalkan: "Dibatalkan",
-}
+};
+
+const cardTypeData = [
+  { name: "Kartu Produktif", count: 245 },
+  { name: "Kartu Afirmatif", count: 189 },
+  { name: "Tidak memiliki keduanya", count: 156 },
+];
+
+const chartConfig = {
+  count: {
+    label: "Count",
+    color: "var(--color-sky-500)",
+  },
+} satisfies ChartConfig;
 
 export function DashboardPage() {
   // Calculate statistics
-  const totalApplications = mockApplications.length
+  const totalApplications = mockApplications.length;
   const pendingApplications = mockApplications.filter((app) =>
-    ["masuk", "screening", "penilaian", "keputusan"].includes(app.status),
-  ).length
-  const approvedApplications = mockApplications.filter((app) => app.status === "disetujui").length
-  const rejectedApplications = mockApplications.filter((app) => app.status === "ditolak").length
+    ["masuk", "screening", "penilaian", "keputusan"].includes(app.status)
+  ).length;
+  const approvedApplications = mockApplications.filter(
+    (app) => app.status === "disetujui"
+  ).length;
+  const rejectedApplications = mockApplications.filter(
+    (app) => app.status === "ditolak"
+  ).length;
 
   // Status distribution data
   const statusData = Object.entries(
-    mockApplications.reduce(
-      (acc, app) => {
-        acc[app.status] = (acc[app.status] || 0) + 1
-        return acc
-      },
-      {} as Record<string, number>,
-    ),
+    mockApplications.reduce((acc, app) => {
+      acc[app.status] = (acc[app.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>)
   ).map(([status, count]) => ({
     name: statusLabels[status as keyof typeof statusLabels],
     value: count,
     color: statusColors[status as keyof typeof statusColors],
-  }))
+  }));
 
   // Type distribution data
   const typeData = Object.entries(
-    mockApplications.reduce(
-      (acc, app) => {
-        acc[app.type] = (acc[app.type] || 0) + 1
-        return acc
-      },
-      {} as Record<string, number>,
-    ),
+    mockApplications.reduce((acc, app) => {
+      acc[app.type] = (acc[app.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>)
   ).map(([type, count]) => ({
     name: type.charAt(0).toUpperCase() + type.slice(1),
     count,
-  }))
+  }));
 
-  const COLORS = ["#6366f1", "#f59e0b", "#10b981"]
+  const COLORS = ["#6366f1", "#f59e0b", "#10b981"];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Ringkasan pengajuan dan statistik UMKM</p>
+        <p className="text-muted-foreground">
+          Ringkasan pengajuan dan statistik UMKM
+        </p>
       </div>
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Pengajuan</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Pengajuan
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalApplications}</div>
-            <p className="text-xs text-muted-foreground">Semua pengajuan yang masuk</p>
+            <p className="text-xs text-muted-foreground">
+              Semua pengajuan yang masuk
+            </p>
           </CardContent>
         </Card>
 
@@ -100,7 +140,9 @@ export function DashboardPage() {
             <CardTitle className="text-sm font-medium">Disetujui</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{approvedApplications}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {approvedApplications}
+            </div>
             <p className="text-xs text-muted-foreground">Pengajuan berhasil</p>
           </CardContent>
         </Card>
@@ -110,7 +152,9 @@ export function DashboardPage() {
             <CardTitle className="text-sm font-medium">Ditolak</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{rejectedApplications}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {rejectedApplications}
+            </div>
             <p className="text-xs text-muted-foreground">Pengajuan ditolak</p>
           </CardContent>
         </Card>
@@ -137,7 +181,10 @@ export function DashboardPage() {
                   dataKey="value"
                 >
                   {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -149,7 +196,9 @@ export function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Jenis Pengajuan</CardTitle>
-            <CardDescription>Distribusi berdasarkan jenis program</CardDescription>
+            <CardDescription>
+              Distribusi berdasarkan jenis program
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -165,6 +214,47 @@ export function DashboardPage() {
         </Card>
       </div>
 
+      {/* Added horizontal bar chart for card type distribution */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Distribusi Jenis Kartu</CardTitle>
+          <CardDescription>
+            Perbandingan jumlah pengguna berdasarkan jenis kartu yang dimiliki
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={chartConfig}>
+            <BarChart
+              accessibilityLayer
+              barGap={0.05}
+              barCategoryGap={0.05}
+              data={cardTypeData}
+              layout="vertical"
+              margin={{
+                left: -20,
+              }}
+            >
+              <XAxis type="number" dataKey="count" hide />
+              <YAxis
+                dataKey="name"
+                type="category"
+                tickLine={false}
+                tickMargin={1}
+                axisLine={false}
+                tickFormatter={(value) => value.slice(0, 100)}
+                width={200}
+                fontSize={14}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />}
+              />
+              <Bar dataKey="count" fill="var(--color-sky-500)" radius={20} barSize={200} />
+            </BarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
       {/* Recent Applications */}
       <Card>
         <CardHeader>
@@ -172,14 +262,18 @@ export function DashboardPage() {
           <CardDescription>5 pengajuan terakhir yang masuk</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-4 flex flex-col">
             {mockApplications.slice(0, 5).map((application) => (
               <Link key={application.id} to={`/application/${application.id}`}>
                 <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
                   <div className="space-y-1">
                     <p className="font-medium">{application.applicantName}</p>
-                    <p className="text-sm text-muted-foreground">{application.businessName}</p>
-                    <p className="text-xs text-muted-foreground">ID: {application.id}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {application.businessName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      ID: {application.id}
+                    </p>
                   </div>
                   <div className="text-right space-y-1">
                     <Badge
@@ -187,17 +281,21 @@ export function DashboardPage() {
                         application.status === "disetujui"
                           ? "success"
                           : application.status === "ditolak"
-                            ? "destructive"
-                            : application.status === "revisi"
-                              ? "warning"
-                              : "default"
+                          ? "destructive"
+                          : application.status === "revisi"
+                          ? "warning"
+                          : "default"
                       }
                     >
                       {statusLabels[application.status]}
                     </Badge>
-                    <p className="text-xs text-muted-foreground capitalize">{application.type}</p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {application.type}
+                    </p>
                     {application.score && (
-                      <p className="text-xs font-medium text-primary">Skor: {application.score}/100</p>
+                      <p className="text-xs font-medium text-primary">
+                        Skor: {application.score}/100
+                      </p>
                     )}
                   </div>
                 </div>
@@ -207,5 +305,5 @@ export function DashboardPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

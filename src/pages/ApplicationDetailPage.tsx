@@ -68,6 +68,12 @@ export function ApplicationDetailPage() {
     return totalScore
   }
 
+  const getCutoffStatus = (score: number) => {
+    if (score >= 75) return { status: "Lolos", color: "text-green-600" }
+    if (score >= 55) return { status: "Hold", color: "text-yellow-600" }
+    return { status: "Gagal", color: "text-red-600" }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -314,6 +320,20 @@ export function ApplicationDetailPage() {
                 </div>
               </div>
 
+              {/* Added cutoff status display */}
+              {application.scoringCriteria && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Status Cutoff</label>
+                  <div className="mt-1">
+                    <span
+                      className={`text-sm font-semibold ${getCutoffStatus(calculateCriteriaScore(application.scoringCriteria)).color}`}
+                    >
+                      {getCutoffStatus(calculateCriteriaScore(application.scoringCriteria)).status}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Batas Waktu SLA</label>
                 <p className="text-sm flex items-center gap-1 mt-1">
@@ -337,6 +357,19 @@ export function ApplicationDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Added scoring recommendation text below Status & SLA card */}
+          {application.scoringCriteria && (
+            <Card>
+              <CardContent className="pt-6">
+                <p className={`text-sm ${getCutoffStatus(calculateCriteriaScore(application.scoringCriteria)).color}`}>
+                  Berdasarkan pengaturan cutoff dengan skor {calculateCriteriaScore(application.scoringCriteria)},
+                  pengajuan direkomendasikan untuk{" "}
+                  {getCutoffStatus(calculateCriteriaScore(application.scoringCriteria)).status.toLowerCase()}.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Actions */}
           {canTakeAction(application.status) && (
@@ -441,9 +474,6 @@ export function ApplicationDetailPage() {
                   <>
                     <Button className="w-full" variant="default">
                       Setujui Final
-                    </Button>
-                    <Button className="w-full bg-transparent" variant="outline">
-                      Kembalikan ke Penilaian
                     </Button>
                     <Button
                       className="w-full"

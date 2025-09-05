@@ -62,6 +62,12 @@ export function TrainingPage() {
     }
   }
 
+  const getCutoffStatus = (score: number) => {
+    if (score >= 75) return { status: "Lolos", variant: "success" as const }
+    if (score >= 55) return { status: "Hold", variant: "warning" as const }
+    return { status: "Gagal", variant: "destructive" as const }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -126,7 +132,7 @@ export function TrainingPage() {
                     </span>
                     {application.score && (
                       <span>
-                        <strong>Skor:</strong> {application.score}/100
+                        <strong>Skor:</strong> {application.score} ({getCutoffStatus(application.score).status})
                       </span>
                     )}
                   </div>
@@ -152,9 +158,6 @@ export function TrainingPage() {
                       {statusLabels[application.status]}
                     </Badge>
                     {getSLABadge(application.slaDeadline)}
-                  </div>
-
-                  <div className="flex gap-2">
                     <Button asChild variant="outline" size="sm">
                       <Link to={`/application/${application.id}`}>
                         <Eye className="h-4 w-4 mr-1" />
