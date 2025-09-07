@@ -32,7 +32,7 @@ export default function FundingListPage() {
           <h1 className="text-3xl font-bold">Funding Programs</h1>
           <p className="text-muted-foreground">Manage funding programs for UMKM development</p>
         </div>
-        <Link to="/programs/fundings/create">
+        <Link to="/programs/fundings/create?type=FUNDING">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Create Program

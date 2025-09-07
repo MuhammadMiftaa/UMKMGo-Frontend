@@ -32,7 +32,7 @@ export default function CertificationListPage() {
           <h1 className="text-3xl font-bold">Certification Programs</h1>
           <p className="text-muted-foreground">Manage certification programs for UMKM development</p>
         </div>
-        <Link to="/programs/certifications/create">
+        <Link to="/programs/certifications/create?type=CERTIFICATION">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Create Program

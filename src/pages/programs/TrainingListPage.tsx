@@ -32,7 +32,7 @@ export default function TrainingListPage() {
           <h1 className="text-3xl font-bold">Training Programs</h1>
           <p className="text-muted-foreground">Manage training programs for UMKM development</p>
         </div>
-        <Link to="/programs/trainings/create">
+        <Link to="/programs/trainings/create?type=TRAINING">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Create Program
