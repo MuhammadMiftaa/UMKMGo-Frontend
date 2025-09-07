@@ -1,7 +1,17 @@
 "use client"
 
 import { Link, useLocation } from "react-router-dom"
-import { LayoutDashboard, GraduationCap, Award, DollarSign, Settings, LogOut, Building2 } from "lucide-react"
+import {
+  LayoutDashboard,
+  GraduationCap,
+  Award,
+  DollarSign,
+  Settings,
+  LogOut,
+  Building2,
+  FolderOpen,
+  ChevronDown,
+} from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -13,15 +23,40 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "../ui/sidebar"
 import { useAuth } from "../../contexts/AuthContext"
 import { Button } from "../ui/button"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible"
 
 const menuItems = [
   {
     title: "Dashboard",
     url: "/",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Programs",
+    icon: FolderOpen,
+    subItems: [
+      {
+        title: "Trainings",
+        url: "/programs/trainings",
+        icon: GraduationCap,
+      },
+      {
+        title: "Certifications",
+        url: "/programs/certifications",
+        icon: Award,
+      },
+      {
+        title: "Fundings",
+        url: "/programs/fundings",
+        icon: DollarSign,
+      },
+    ],
   },
   {
     title: "Pelatihan",
@@ -68,12 +103,38 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={location.pathname === item.url}>
-                    <Link to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
+                  {item.subItems ? (
+                    <Collapsible defaultOpen={location.pathname.startsWith("/programs")}>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <item.icon />
+                          <span>{item.title}</span>
+                          <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {item.subItems.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton asChild isActive={location.pathname === subItem.url}>
+                                <Link to={subItem.url}>
+                                  <subItem.icon />
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ) : (
+                    <SidebarMenuButton asChild isActive={location.pathname === item.url}>
+                      <Link to={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

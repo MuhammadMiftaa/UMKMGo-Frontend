@@ -11,6 +11,9 @@ import { SettingsPage } from "./pages/SettingsPage"
 import { AddAdminPage } from "./pages/AddAdminPage"
 import { AdminListPage } from "./pages/AdminListPage"
 import { AdminPermissionsPage } from "./pages/AdminPermissionsPage"
+import ProgramTrainingsPage from "./pages/programs/TrainingListPage"
+import ProgramCertificationsPage from "./pages/programs/CertificationListPage"
+import ProgramFundingsPage from "./pages/programs/FundingListPage"
 import { ProtectedRoute } from "./components/ProtectedRoute"
 
 function App() {
@@ -35,6 +38,10 @@ function App() {
           <Route path="admin/add" element={<AddAdminPage />} />
           <Route path="admin/list" element={<AdminListPage />} />
           <Route path="admin/permissions" element={<AdminPermissionsPage />} />
+
+          <Route path="programs/trainings" element={<ProgramTrainingsPage />} />
+          <Route path="programs/certifications" element={<ProgramCertificationsPage />} />
+          <Route path="programs/fundings" element={<ProgramFundingsPage />} />
         </Route>
       </Routes>
     </AuthProvider>
