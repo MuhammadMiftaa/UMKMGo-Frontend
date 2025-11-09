@@ -1,61 +1,54 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { Button } from "../components/ui/button"
-import { Badge } from "../components/ui/badge"
-import { Input } from "../components/ui/input"
-import { ArrowLeft, Search, Edit, Trash2, Users } from "lucide-react"
-import { Link } from "react-router-dom"
-
-const mockAdmins = [
-  {
-    id: "1",
-    name: "Super Administrator",
-    email: "superadmin@umkm.go.id",
-    role: "superadmin",
-    status: "active",
-    lastLogin: "2024-01-16T10:30:00Z",
-    createdAt: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "2",
-    name: "Admin Kementrian",
-    email: "admin@umkm.go.id",
-    role: "admin_kementrian",
-    status: "active",
-    lastLogin: "2024-01-16T09:15:00Z",
-    createdAt: "2024-01-05T00:00:00Z",
-  },
-  {
-    id: "3",
-    name: "Ahmad Fauzi",
-    email: "ahmad.fauzi@umkm.go.id",
-    role: "admin_kementrian",
-    status: "inactive",
-    lastLogin: "2024-01-10T14:20:00Z",
-    createdAt: "2024-01-10T00:00:00Z",
-  },
-]
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
+import { Input } from "../components/ui/input";
+import { ArrowLeft, Search, Edit, Trash2, Users } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useUsersManagement } from "../contexts/UserContext";
 
 export function AdminListPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const { getAllUsers, users, deleteUser } = useUsersManagement();
 
-  const filteredAdmins = mockAdmins.filter((admin) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const filteredAdmins = users.filter((admin) => {
     const matchesSearch =
       admin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      admin.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || admin.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+      admin.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" ||
+      (admin.is_active ? "active" : "inactive") === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  useEffect(() => {
+    getAllUsers();
+  }, []);
+
+  const handleDelete = async (adminId: number) => {
+    if (window.confirm("Apakah Anda yakin ingin menghapus admin ini?")) {
+      await deleteUser(adminId);
+      getAllUsers(); // Refresh the list after deletion
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Daftar Admin</h1>
-          <p className="text-muted-foreground">Kelola akun administrator sistem SAPA UMKM</p>
+          <p className="text-muted-foreground">
+            Kelola akun administrator sistem SAPA UMKM
+          </p>
         </div>
         <Button asChild variant="outline" size="sm">
           <Link to="/settings">
@@ -109,18 +102,33 @@ export function AdminListPage() {
                   </div>
                   <div className="flex items-center gap-4 text-sm">
                     <span>
-                      <strong>Role:</strong> {admin.role === "superadmin" ? "Super Administrator" : "Admin Kementrian"}
+                      <strong>Role:</strong>{" "}
+                      {admin.role_name
+                        .split("_")
+                        .map(
+                          (word) => word.charAt(0).toUpperCase() + word.slice(1)
+                        )
+                        .join(" ")}
                     </span>
                     <span>
                       <strong>Status:</strong>
-                      <Badge variant={admin.status === "active" ? "success" : "secondary"} className="ml-1">
-                        {admin.status === "active" ? "Aktif" : "Tidak Aktif"}
+                      <Badge
+                        variant={admin.is_active ? "success" : "secondary"}
+                        className="ml-1"
+                      >
+                        {admin.is_active ? "Aktif" : "Tidak Aktif"}
                       </Badge>
                     </span>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>Login terakhir: {new Date(admin.lastLogin).toLocaleString("id-ID")}</span>
-                    <span>Dibuat: {new Date(admin.createdAt).toLocaleDateString("id-ID")}</span>
+                    <span>
+                      Login terakhir:{" "}
+                      {new Date(admin.last_login_at).toLocaleString("id-ID")}
+                    </span>
+                    <span>
+                      Dibuat:{" "}
+                      {new Date(admin.created_at).toLocaleDateString("id-ID")}
+                    </span>
                   </div>
                 </div>
 
@@ -129,7 +137,11 @@ export function AdminListPage() {
                     <Edit className="h-4 w-4 mr-1" />
                     Edit
                   </Button>
-                  <Button variant="destructive" size="sm">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(admin.id)}
+                  >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Hapus
                   </Button>
@@ -144,10 +156,12 @@ export function AdminListPage() {
         <Card>
           <CardContent className="p-6 text-center">
             <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">Tidak ada admin yang ditemukan.</p>
+            <p className="text-muted-foreground">
+              Tidak ada admin yang ditemukan.
+            </p>
           </CardContent>
         </Card>
       )}
     </div>
-  )
+  );
 }

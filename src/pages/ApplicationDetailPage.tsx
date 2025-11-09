@@ -372,7 +372,7 @@ export function ApplicationDetailPage() {
           )}
 
           {/* Actions */}
-          {canTakeAction(application.status) && (
+          {user?.permissions.includes() && (
             <Card>
               <CardHeader>
                 <CardTitle>Tindakan</CardTitle>

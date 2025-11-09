@@ -2,8 +2,8 @@
 
 import type React from "react";
 
-import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -23,16 +23,32 @@ import {
 } from "../../components/ui/select";
 import { Switch } from "../../components/ui/switch";
 import { ArrowLeft, Plus, Trash2, Upload } from "lucide-react";
-import type {
+import {
+  CreateProgramData,
   ProgramType,
   TrainingType,
-  CreateProgramData,
-} from "../../types/program";
+  usePrograms,
+} from "../../contexts/ProgramContext";
+import { Programs, TrainingTypes } from "../../lib/const";
+import { fileToBase64, isImageFile, validateImageSize } from "../../lib/utils";
 
 export default function CreateProgramPage() {
+  const { id } = useParams();
+  const isEditMode = !!id; // Check if we're in edit mode
+
+  const { 
+    createProgram, 
+    getProgramById, 
+    currentProgram, 
+    updateProgram,
+    clearCurrentProgram,
+    isLoading 
+  } = usePrograms();
+  
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const programType = (searchParams.get("type") as ProgramType) || "TRAINING";
+  const programType =
+    (searchParams.get("type") as ProgramType) || Programs.TRAINING;
 
   const [formData, setFormData] = useState<CreateProgramData>({
     title: "",
@@ -41,6 +57,15 @@ export default function CreateProgramPage() {
     provider: "",
     provider_logo: "",
     type: programType,
+    training_type: TrainingTypes.OFFLINE as TrainingType,
+    batch: 0,
+    batch_start_date: "",
+    batch_end_date: "",
+    location: "",
+    min_amount: 0,
+    max_amount: 0,
+    interest_rate: 0,
+    max_tenure_months: 0,
     application_deadline: "",
     is_active: true,
     benefits: [],
@@ -49,119 +74,240 @@ export default function CreateProgramPage() {
 
   const [bannerPreview, setBannerPreview] = useState<string>("");
   const [logoPreview, setLogoPreview] = useState<string>("");
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+
+  // Load program data when editing
+  useEffect(() => {
+    if (isEditMode && id) {
+      getProgramById(Number(id));
+    }
+    
+    // Cleanup when unmounting
+    return () => {
+      if (isEditMode) {
+        clearCurrentProgram();
+      }
+    };
+  }, [id, isEditMode]);
+
+  // Populate form when currentProgram is loaded
+  useEffect(() => {
+    if (isEditMode && currentProgram) {
+      setFormData({
+        title: currentProgram.title || "",
+        description: currentProgram.description || "",
+        banner: currentProgram.banner || "",
+        provider: currentProgram.provider || "",
+        provider_logo: currentProgram.provider_logo || "",
+        type: currentProgram.type || programType,
+        training_type: currentProgram.training_type || TrainingTypes.OFFLINE as TrainingType,
+        batch: currentProgram.batch || 0,
+        batch_start_date: currentProgram.batch_start_date || "",
+        batch_end_date: currentProgram.batch_end_date || "",
+        location: currentProgram.location || "",
+        min_amount: currentProgram.min_amount || 0,
+        max_amount: currentProgram.max_amount || 0,
+        interest_rate: currentProgram.interest_rate || 0,
+        max_tenure_months: currentProgram.max_tenure_months || 0,
+        application_deadline: currentProgram.application_deadline || "",
+        is_active: currentProgram.is_active ?? true,
+        benefits: currentProgram.benefits || [],
+        requirements: currentProgram.requirements || [],
+      });
+
+      // Set image previews if exists
+      if (currentProgram.banner) {
+        setBannerPreview(currentProgram.banner);
+      }
+      if (currentProgram.provider_logo) {
+        setLogoPreview(currentProgram.provider_logo);
+      }
+    }
+  }, [currentProgram, isEditMode, programType]);
 
   const handleInputChange = (field: keyof CreateProgramData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleFileUpload = (field: "banner" | "provider_logo", file: File) => {
-    const url = URL.createObjectURL(file);
-    handleInputChange(field, file);
+  const handleFileUpload = async (
+    field: "banner" | "provider_logo",
+    file: File
+  ) => {
+    try {
+      // Validate file type
+      if (!isImageFile(file)) {
+        alert("Please upload an image file");
+        return;
+      }
 
-    if (field === "banner") {
-      setBannerPreview(url);
-    } else {
-      setLogoPreview(url);
+      // Validate file size (max 5MB)
+      if (!validateImageSize(file, 5)) {
+        alert("File size must be less than 5MB");
+        return;
+      }
+
+      setIsUploading(true);
+
+      // Convert to base64
+      const base64String = await fileToBase64(file);
+
+      // Save base64 to formData
+      handleInputChange(field, base64String);
+
+      // Set preview
+      if (field === "banner") {
+        setBannerPreview(base64String);
+      } else {
+        setLogoPreview(base64String);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("Failed to upload file. Please try again.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const addBenefit = () => {
     setFormData((prev) => ({
       ...prev,
-      benefits: [...prev.benefits, { name: "" }],
+      benefits: [...(prev.benefits ?? []), ""],
     }));
   };
 
   const removeBenefit = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      benefits: prev.benefits.filter((_, i) => i !== index),
+      benefits: (prev.benefits ?? []).filter((_, i) => i !== index),
     }));
   };
 
-  const updateBenefit = (index: number, name: string) => {
+  const updateBenefit = (index: number, value: string) => {
     setFormData((prev) => ({
       ...prev,
-      benefits: prev.benefits.map((benefit, i) =>
-        i === index ? { name } : benefit
-      ),
+      benefits: (prev.benefits ?? []).map((b, i) => (i === index ? value : b)),
     }));
   };
 
   const addRequirement = () => {
     setFormData((prev) => ({
       ...prev,
-      requirements: [...prev.requirements, { name: "" }],
+      requirements: [...(prev.requirements ?? []), ""],
     }));
   };
 
   const removeRequirement = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      requirements: prev.requirements.filter((_, i) => i !== index),
+      requirements: (prev.requirements ?? []).filter((_, i) => i !== index),
     }));
   };
 
-  const updateRequirement = (index: number, name: string) => {
+  const updateRequirement = (index: number, value: string) => {
     setFormData((prev) => ({
       ...prev,
-      requirements: prev.requirements.map((req, i) =>
-        i === index ? { name } : req
+      requirements: (prev.requirements ?? []).map((r, i) =>
+        i === index ? value : r
       ),
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your API
-    console.log("Creating program:", formData);
+    setError("");
 
-    // Navigate back to the appropriate list page
-    const listPath = {
-      TRAINING: "/programs/trainings",
-      CERTIFICATION: "/programs/certifications",
-      FUNDING: "/programs/fundings",
-    }[formData.type];
+    // Validation
+    if (!formData.title || !formData.description || !formData.application_deadline) {
+      setError("Please fill in all required fields");
+      return;
+    }
 
-    navigate(listPath);
+    if (!formData.banner || !formData.provider_logo) {
+      setError("Please upload both banner and provider logo");
+      return;
+    }
+
+    let result;
+
+    if (isEditMode && id) {
+      // Update existing program
+      result = await updateProgram(Number(id), formData);
+    } else {
+      // Create new program
+      result = await createProgram(formData);
+    }
+
+    if (result.success) {
+      alert(
+        isEditMode 
+          ? "Program updated successfully!" 
+          : "Program created successfully!"
+      );
+      navigate(`/programs/${formData.type}`);
+    } else {
+      setError(result.message || `Failed to ${isEditMode ? 'update' : 'create'} program`);
+    }
   };
 
-  const getBackPath = () => {
-    return {
-      TRAINING: "/programs/trainings",
-      CERTIFICATION: "/programs/certifications",
-      FUNDING: "/programs/fundings",
-    }[formData.type];
-  };
+  // Show loading state when fetching program data
+  if (isEditMode && isLoading && !currentProgram) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">Loading program data...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const getProgramTypeLabel = () => {
-    return {
-      TRAINING: "Training",
-      CERTIFICATION: "Certification",
-      FUNDING: "Funding",
-    }[formData.type];
-  };
+  // Show error if program not found in edit mode
+  if (isEditMode && !isLoading && !currentProgram && id) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-bold text-destructive">Program Not Found</h2>
+          <p className="text-muted-foreground">The program you're trying to edit doesn't exist.</p>
+          <Button onClick={() => navigate("/programs")}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Programs
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center w-full justify-between">
         <div>
-          <h1 className="text-3xl font-bold">
-            Create {getProgramTypeLabel()} Program
+          <h1 className="text-3xl font-bold capitalize">
+            {isEditMode ? 'Edit' : 'Create'} {formData.type} Program
           </h1>
           <p className="text-muted-foreground">
-            Add a new {formData.type.toLowerCase()} program
+            {isEditMode 
+              ? `Update ${formData.type} program details`
+              : `Add a new ${formData.type} program`
+            }
           </p>
         </div>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate(getBackPath())}
+          onClick={() => navigate(`/programs/${formData.type}`)}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Kembali
         </Button>
       </div>
+
+      {error && (
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg">
+          <p className="font-medium">Error</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
@@ -216,16 +362,34 @@ export default function CreateProgramPage() {
                   onValueChange={(value: ProgramType) =>
                     handleInputChange("type", value)
                   }
+                  disabled={isEditMode} // Disable changing type in edit mode
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="TRAINING">Training</SelectItem>
-                    <SelectItem value="CERTIFICATION">Certification</SelectItem>
-                    <SelectItem value="FUNDING">Funding</SelectItem>
+                    <SelectItem
+                      value={Programs.TRAINING}
+                      className="capitalize"
+                    >
+                      {Programs.TRAINING}
+                    </SelectItem>
+                    <SelectItem
+                      value={Programs.CERTIFICATION}
+                      className="capitalize"
+                    >
+                      {Programs.CERTIFICATION}
+                    </SelectItem>
+                    <SelectItem value={Programs.FUNDING} className="capitalize">
+                      {Programs.FUNDING}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+                {isEditMode && (
+                  <p className="text-xs text-muted-foreground">
+                    Program type cannot be changed when editing
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="deadline">Application Deadline *</Label>
@@ -255,12 +419,14 @@ export default function CreateProgramPage() {
         </Card>
 
         {/* Training/Certification Specific Fields */}
-        {(formData.type === "TRAINING" ||
-          formData.type === "CERTIFICATION") && (
+        {(formData.type === Programs.TRAINING ||
+          formData.type === Programs.CERTIFICATION) && (
           <Card>
             <CardHeader>
               <CardTitle>
-                {formData.type === "TRAINING" ? "Training" : "Certification"}{" "}
+                {formData.type === Programs.TRAINING
+                  ? "Training"
+                  : "Certification"}{" "}
                 Details
               </CardTitle>
             </CardHeader>
@@ -278,10 +444,24 @@ export default function CreateProgramPage() {
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Basic">Basic</SelectItem>
-                      <SelectItem value="Intermediate">Intermediate</SelectItem>
-                      <SelectItem value="Advanced">Advanced</SelectItem>
-                      <SelectItem value="Professional">Professional</SelectItem>
+                      <SelectItem
+                        value={TrainingTypes.ONLINE}
+                        className="capitalize"
+                      >
+                        {TrainingTypes.ONLINE}
+                      </SelectItem>
+                      <SelectItem
+                        value={TrainingTypes.OFFLINE}
+                        className="capitalize"
+                      >
+                        {TrainingTypes.OFFLINE}
+                      </SelectItem>
+                      <SelectItem
+                        value={TrainingTypes.HYBRID}
+                        className="capitalize"
+                      >
+                        {TrainingTypes.HYBRID}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -343,7 +523,7 @@ export default function CreateProgramPage() {
         )}
 
         {/* Funding Specific Fields */}
-        {formData.type === "FUNDING" && (
+        {formData.type === Programs.FUNDING && (
           <Card>
             <CardHeader>
               <CardTitle>Funding Details</CardTitle>
@@ -444,6 +624,7 @@ export default function CreateProgramPage() {
                           setBannerPreview("");
                           handleInputChange("banner", "");
                         }}
+                        disabled={isUploading}
                       >
                         Remove
                       </Button>
@@ -457,13 +638,14 @@ export default function CreateProgramPage() {
                           className="cursor-pointer"
                         >
                           <span className="text-sm text-muted-foreground">
-                            Click to upload banner
+                            {isUploading ? "Uploading..." : "Click to upload banner"}
                           </span>
                           <Input
                             id="banner-upload"
                             type="file"
                             accept="image/*"
                             className="hidden"
+                            disabled={isUploading}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) handleFileUpload("banner", file);
@@ -494,6 +676,7 @@ export default function CreateProgramPage() {
                           setLogoPreview("");
                           handleInputChange("provider_logo", "");
                         }}
+                        disabled={isUploading}
                       >
                         Remove
                       </Button>
@@ -504,13 +687,14 @@ export default function CreateProgramPage() {
                       <div className="mt-2">
                         <Label htmlFor="logo-upload" className="cursor-pointer">
                           <span className="text-sm text-muted-foreground">
-                            Click to upload logo
+                            {isUploading ? "Uploading..." : "Click to upload logo"}
                           </span>
                           <Input
                             id="logo-upload"
                             type="file"
                             accept="image/*"
                             className="hidden"
+                            disabled={isUploading}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) handleFileUpload("provider_logo", file);
@@ -543,15 +727,15 @@ export default function CreateProgramPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {formData.benefits.length === 0 ? (
+            {formData?.benefits?.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 No benefits added yet.
               </p>
             ) : (
-              formData.benefits.map((benefit, index) => (
+              formData?.benefits?.map((benefit, index) => (
                 <div key={index} className="flex gap-2">
                   <Input
-                    value={benefit.name}
+                    value={benefit}
                     onChange={(e) => updateBenefit(index, e.target.value)}
                     placeholder="Enter benefit description"
                     className="flex-1"
@@ -587,15 +771,15 @@ export default function CreateProgramPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {formData.requirements.length === 0 ? (
+            {formData?.requirements?.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 No requirements added yet.
               </p>
             ) : (
-              formData.requirements.map((requirement, index) => (
+              formData?.requirements?.map((requirement, index) => (
                 <div key={index} className="flex gap-2">
                   <Input
-                    value={requirement.name}
+                    value={requirement}
                     onChange={(e) => updateRequirement(index, e.target.value)}
                     placeholder="Enter requirement description"
                     className="flex-1"
@@ -619,11 +803,20 @@ export default function CreateProgramPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate(getBackPath())}
+            onClick={() => navigate(`/programs/${formData.type}`)}
+            disabled={isLoading || isUploading}
           >
             Cancel
           </Button>
-          <Button type="submit">Save Program</Button>
+          <Button 
+            type="submit" 
+            disabled={isLoading || isUploading}
+          >
+            {isLoading 
+              ? (isEditMode ? "Updating..." : "Creating...") 
+              : (isEditMode ? "Update Program" : "Create Program")
+            }
+          </Button>
         </div>
       </form>
     </div>

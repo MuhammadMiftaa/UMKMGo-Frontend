@@ -19,7 +19,7 @@ export function SettingsPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* User Management - Superadmin only */}
-        {user?.role === "superadmin" && (
+        {/* {user?.role === "superadmin" && ( */}
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -40,10 +40,10 @@ export function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
-        )}
+        {/* )} */}
 
         {/* Scoring Configuration - Superadmin only */}
-        {user?.role === "superadmin" && (
+        {/* {user?.role === "superadmin" && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -72,9 +72,9 @@ export function SettingsPage() {
               <Button className="w-full">Simpan Konfigurasi</Button>
             </CardContent>
           </Card>
-        )}
+        )} */}
 
-        {user?.role === "superadmin" && (
+        {/* {user?.role === "superadmin" && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -102,7 +102,7 @@ export function SettingsPage() {
               <Button className="w-full">Simpan Cutoff</Button>
             </CardContent>
           </Card>
-        )}
+        )} */}
 
         {/* Document Templates */}
         {/* <Card>
@@ -128,7 +128,7 @@ export function SettingsPage() {
         </Card> */}
 
         {/* SLA Configuration - Superadmin only */}
-        {user?.role === "superadmin" && (
+        {/* {user?.role === "superadmin" && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -153,7 +153,7 @@ export function SettingsPage() {
               <Button className="w-full">Simpan SLA</Button>
             </CardContent>
           </Card>
-        )}
+        )} */}
 
         {/* Profile Settings */}
         <Card>
@@ -172,7 +172,7 @@ export function SettingsPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Role</label>
-              <Input value={user?.role?.replace("_", " ").toUpperCase()} disabled />
+              <Input value={user?.role_name?.replace("_", " ").toUpperCase()} disabled />
             </div>
             <Button className="w-full">Update Profil</Button>
             <Button variant="outline" className="w-full bg-transparent">

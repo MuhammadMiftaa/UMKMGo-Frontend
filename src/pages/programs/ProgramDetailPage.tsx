@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Card,
@@ -22,14 +22,28 @@ import {
   Percent,
   Clock,
 } from "lucide-react";
-import { mockPrograms } from "../../data/mockPrograms";
+import { usePrograms } from "../../contexts/ProgramContext";
+import { Programs } from "../../lib/const";
 
 export default function ProgramDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const program = mockPrograms.find((p) => p.id === Number.parseInt(id || "0"));
+  const {
+    getProgramById,
+    currentProgram: program,
+    deleteProgram,
+    activateProgram,
+    deactivateProgram,
+  } = usePrograms();
+
   const [isActive, setIsActive] = useState(program?.is_active || false);
+
+  useEffect(() => {
+    if (id) {
+      getProgramById(Number(id));
+    }
+  }, [id]);
 
   if (!program) {
     return (
@@ -52,34 +66,16 @@ export default function ProgramDetailPage() {
     );
   }
 
-  const getBackPath = () => {
-    return {
-      TRAINING: "/programs/trainings",
-      CERTIFICATION: "/programs/certifications",
-      FUNDING: "/programs/fundings",
-    }[program.type];
-  };
-
-  const getEditPath = () => {
-    return {
-      TRAINING: `/programs/trainings/${program.id}/edit`,
-      CERTIFICATION: `/programs/certifications/${program.id}/edit`,
-      FUNDING: `/programs/fundings/${program.id}/edit`,
-    }[program.type];
-  };
-
   const handleDelete = () => {
     if (confirm("Are you sure you want to delete this program?")) {
-      // Here you would typically call your API to soft delete
-      console.log("Deleting program:", program.id);
-      navigate(getBackPath());
+      deleteProgram(Number(id));
     }
   };
 
   const handleToggleActive = (checked: boolean) => {
     setIsActive(checked);
-    // Here you would typically call your API to update the status
-    console.log("Toggling program status:", program.id, checked);
+    if (checked) activateProgram(Number(id));
+    else deactivateProgram(Number(id));
   };
 
   const formatCurrency = (amount: number) => {
@@ -98,17 +94,15 @@ export default function ProgramDetailPage() {
             <h1 className="text-3xl font-bold">{program.title}</h1>
             <p className="text-muted-foreground">Program Details</p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(getBackPath())}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Kembali
-          </Button>
+          <Link to={`/programs/${program.type}`}>
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Kembali
+            </Button>
+          </Link>
         </div>
         <div className="flex gap-2">
-          <Link to={getEditPath()}>
+          <Link to={`/programs/${program.type}/${program.id}/edit`}>
             <Button variant="outline">
               <Edit className="h-4 w-4 mr-2" />
               Edit
@@ -156,7 +150,9 @@ export default function ProgramDetailPage() {
                 />
                 <div>
                   <p className="font-medium">{program.provider}</p>
-                  <Badge variant="outline">{program.type}</Badge>
+                  <Badge variant="outline" className="capitalize">
+                    {program.type}
+                  </Badge>
                 </div>
               </div>
 
@@ -173,7 +169,9 @@ export default function ProgramDetailPage() {
                 <div>
                   <p className="text-muted-foreground">Created At</p>
                   <p className="font-medium">
-                    {new Date(program.created_at).toLocaleDateString("id-ID")}
+                    {program.created_at
+                      ? new Date(program.created_at).toLocaleDateString("id-ID")
+                      : "-"}
                   </p>
                 </div>
               </div>
@@ -181,20 +179,21 @@ export default function ProgramDetailPage() {
           </Card>
 
           {/* Training/Certification Details */}
-          {(program.type === "TRAINING" ||
-            program.type === "CERTIFICATION") && (
+          {(program.type === Programs.TRAINING ||
+            program.type === Programs.CERTIFICATION) && (
             <Card>
               <CardHeader>
-                <CardTitle>
-                  {program.type === "TRAINING" ? "Training" : "Certification"}{" "}
-                  Details
+                <CardTitle className="capitalize">
+                  {program.type} Details
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {program.training_type && (
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">{program.training_type}</Badge>
+                      <Badge variant="outline" className="capitalize">
+                        {program.training_type}
+                      </Badge>
                       <span className="text-sm text-muted-foreground">
                         Type
                       </span>
@@ -233,7 +232,7 @@ export default function ProgramDetailPage() {
           )}
 
           {/* Funding Details */}
-          {program.type === "FUNDING" && (
+          {program.type === Programs.FUNDING && (
             <Card>
               <CardHeader>
                 <CardTitle>Funding Details</CardTitle>
@@ -275,10 +274,10 @@ export default function ProgramDetailPage() {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {program.benefits.map((benefit) => (
-                    <li key={benefit.id} className="flex items-start gap-2">
+                  {program.benefits.map((benefit, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
                       <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                      <span className="text-sm">{benefit.name}</span>
+                      <span className="text-sm">{benefit}</span>
                     </li>
                   ))}
                 </ul>
@@ -294,10 +293,10 @@ export default function ProgramDetailPage() {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {program.requirements.map((requirement) => (
-                    <li key={requirement.id} className="flex items-start gap-2">
+                  {program.requirements.map((requirement, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
                       <div className="w-2 h-2 bg-muted-foreground rounded-full mt-2 flex-shrink-0" />
-                      <span className="text-sm">{requirement.name}</span>
+                      <span className="text-sm">{requirement}</span>
                     </li>
                   ))}
                 </ul>

@@ -1,0 +1,55 @@
+export const Permissions = {
+  SCREENING_TRAINING: "SCREENING_TRAINING",
+  MANAGE_TRAINING_PROGRAMS: "MANAGE_TRAINING_PROGRAMS",
+  FINAL_TRAINING: "FINAL_TRAINING",
+  VIEW_TRAINING: "VIEW_TRAINING",
+  SCREENING_SERTIFICATION: "SCREENING_SERTIFICATION",
+  MANAGE_SERTIFICATION_PROGRAMS: "MANAGE_SERTIFICATION_PROGRAMS",
+  FINAL_SERTIFICATION: "FINAL_SERTIFICATION",
+  VIEW_SERTIFICATION: "VIEW_SERTIFICATION",
+  SCREENING_FUNDING: "SCREENING_FUNDING",
+  MANAGE_FUNDING_PROGRAMS: "MANAGE_FUNDING_PROGRAMS",
+  FINAL_FUNDING: "FINAL_FUNDING",
+  VIEW_FUNDING: "VIEW_FUNDING",
+  USER_MANAGEMENT: "USER_MANAGEMENT",
+  ROLE_PERMISSIONS_MANAGEMENT: "ROLE_PERMISSIONS_MANAGEMENT",
+  GENERATE_REPORT: "GENERATE_REPORT",
+  SLA_CONFIGURATION: "SLA_CONFIGURATION",
+} as const;
+
+export const RoleConstants = {
+  SUPERADMIN: "superadmin",
+  ADMIN_VENDER: "admin_vendor",
+  ADMIN_SCREENING: "admin_screening",
+  UMKM: "pelaku_usaha",
+} as const;
+
+export const Programs = {
+  TRAINING: "training",
+  CERTIFICATION: "certification",
+  FUNDING: "funding",
+};
+
+export const Documents = {
+  KTP: "ktp",
+  NIB: "nib",
+  NPWP: "npwp",
+  PROPOSAL: "proposal",
+  PORTFOLIO: "portfolio",
+  REKENING: "rekening",
+  OTHER: "other",
+};
+
+export const Statuses = {
+  SCREENING: "screening",
+  REVISED: "revised",
+  FINAL: "final",
+  APPROVED: "approved",
+  REJECTED: "rejected",
+};
+
+export const TrainingTypes = {
+  ONLINE: "online",
+  OFFLINE: "offline",
+  HYBRID: "hybrid",
+};

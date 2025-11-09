@@ -43,17 +43,17 @@ const menuItems = [
     subItems: [
       {
         title: "Trainings",
-        url: "/programs/trainings",
+        url: "/programs/training",
         icon: GraduationCap,
       },
       {
         title: "Certifications",
-        url: "/programs/certifications",
+        url: "/programs/certification",
         icon: Award,
       },
       {
         title: "Fundings",
-        url: "/programs/fundings",
+        url: "/programs/funding",
         icon: DollarSign,
       },
     ],
@@ -148,7 +148,7 @@ export function AppSidebar() {
             Masuk sebagai: <span className="font-medium">{user?.name}</span>
           </div>
           <div className="mb-2 text-xs text-muted-foreground">
-            Role: <span className="font-medium capitalize">{user?.role?.replace("_", " ")}</span>
+            Role: <span className="font-medium capitalize">{user?.role_name?.replace("_", " ")}</span>
           </div>
           <Button variant="outline" size="sm" onClick={logout} className="w-full bg-transparent">
             <LogOut className="h-4 w-4 mr-2" />

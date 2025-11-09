@@ -1,36 +1,76 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { Button } from "../components/ui/button"
-import { Input } from "../components/ui/input"
-import { Label } from "../components/ui/label"
-import { ArrowLeft, UserPlus } from "lucide-react"
-import { Link } from "react-router-dom"
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { ArrowLeft, UserPlus } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { CreateUserData, useUsersManagement } from "../contexts/UserContext";
+import { get } from "http";
 
 export function AddAdminPage() {
-  const [formData, setFormData] = useState({
+  const navigate = useNavigate();
+
+  const { rolePermissions, getListRolePermissions, createUser, isLoading } =
+    useUsersManagement();
+
+  const [error, setError] = useState("");
+  const [formData, setFormData] = useState<CreateUserData>({
     name: "",
     email: "",
-    role: "admin_kementrian",
     password: "",
-    confirmPassword: "",
-  })
+    confirm_password: "",
+    role_id: 2, // Default: admin_screening
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle form submission
-    console.log("Adding new admin:", formData)
-  }
+  useEffect(() => {
+    getListRolePermissions();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    // Validation
+    if (formData.password !== formData.confirm_password) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    const result = await createUser(formData);
+
+    if (result.success) {
+      alert("User created successfully!");
+      navigate("/admin/list");
+    } else {
+      setError(result.message || "Failed to create user");
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tambah Admin Baru</h1>
-          <p className="text-muted-foreground">Buat akun admin baru untuk sistem SAPA UMKM</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Tambah Admin Baru
+          </h1>
+          <p className="text-muted-foreground">
+            Buat akun admin baru untuk sistem SAPA UMKM
+          </p>
         </div>
         <Button asChild variant="outline" size="sm">
           <Link to="/settings">
@@ -55,7 +95,9 @@ export function AddAdminPage() {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   placeholder="Masukkan nama lengkap"
                   required
                 />
@@ -66,7 +108,9 @@ export function AddAdminPage() {
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   placeholder="admin@umkm.go.id"
                   required
                 />
@@ -77,12 +121,23 @@ export function AddAdminPage() {
               <Label htmlFor="role">Role</Label>
               <select
                 id="role"
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                value={formData.role_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, role_id: Number(e.target.value) })
+                }
                 className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
               >
-                <option value="admin_kementrian">Admin Kementrian</option>
-                <option value="superadmin">Super Administrator</option>
+                {rolePermissions.map((role) => (
+                  <option key={role.role_id} value={role.role_id}>
+                    {role.role_name
+                      .replace("_", " ")
+                      .split(" ")
+                      .map(
+                        (word) => word.charAt(0).toUpperCase() + word.slice(1)
+                      )
+                      .join(" ")}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -93,7 +148,9 @@ export function AddAdminPage() {
                   id="password"
                   type="password"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   placeholder="Minimal 8 karakter"
                   required
                 />
@@ -103,8 +160,13 @@ export function AddAdminPage() {
                 <Input
                   id="confirmPassword"
                   type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  value={formData.confirm_password}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      confirm_password: e.target.value,
+                    })
+                  }
                   placeholder="Ulangi password"
                   required
                 />
@@ -115,7 +177,12 @@ export function AddAdminPage() {
               <Button type="submit" className="flex-1">
                 Tambah Admin
               </Button>
-              <Button asChild type="button" variant="outline" className="flex-1 bg-transparent">
+              <Button
+                asChild
+                type="button"
+                variant="outline"
+                className="flex-1 bg-transparent"
+              >
                 <Link to="/settings">Batal</Link>
               </Button>
             </div>
@@ -123,5 +190,5 @@ export function AddAdminPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
