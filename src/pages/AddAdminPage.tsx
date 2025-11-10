@@ -69,7 +69,7 @@ export function AddAdminPage() {
             Tambah Admin Baru
           </h1>
           <p className="text-muted-foreground">
-            Buat akun admin baru untuk sistem SAPA UMKM
+            Buat akun admin baru untuk sistem UMKMGo
           </p>
         </div>
         <Button asChild variant="outline" size="sm">

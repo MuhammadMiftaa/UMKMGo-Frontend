@@ -19,7 +19,7 @@ build_client:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - echo "Building client application..."
-    - docker build --build-arg VITE_API_URL=https://api-refina.miftech.web.id/v1 -t "$CI_REGISTRY_IMAGE/client:latest" -t "$CI_REGISTRY_IMAGE/client:$TAG_IMAGE" .
+    - docker build --build-arg VITE_API_URL=https://api-umkmgo-staging.miftech.web.id/v1 -t "$CI_REGISTRY_IMAGE/client:latest" -t "$CI_REGISTRY_IMAGE/client:$TAG_IMAGE" .
     - docker push "$CI_REGISTRY_IMAGE/client" --all-tags
     - echo "$CI_JOB_ID" > client_build_job_id.txt
   artifacts:
@@ -61,12 +61,12 @@ deploy-staging:
         export APP_IMAGE_STG_CLIENT=\"$CI_REGISTRY_IMAGE/client\" &&
         export APP_IMAGE_STG_CLIENT_TAG=$TAG_IMAGE
 
-        cd ~/web/staging/sapaUMKM
+        cd ~/web/staging/umkmgo
 
         docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
-        docker compose -f docker-compose.stg.yml down &&
-        docker compose -f docker-compose.stg.yml pull &&
-        docker compose -f docker-compose.stg.yml up -d --build
+        docker compose -f docker-compose.stg.yml rm -f umkmgo-staging-frontend &&
+        docker compose -f docker-compose.stg.yml pull umkmgo-staging-frontend &&
+        docker compose -f docker-compose.stg.yml --profile frontend up -d --build
       "
 
 deploy-production:
@@ -88,11 +88,11 @@ deploy-production:
         export APP_IMAGE_PROD_CLIENT=\"$CI_REGISTRY_IMAGE/client\" &&
         export APP_IMAGE_PROD_CLIENT_TAG=$CI_COMMIT_TAG &&
 
-        cd ~/web/production/sapaUMKM
+        cd ~/web/production/umkmgo
 
         docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
-        docker compose -f docker-compose.prod.yml down &&
-        docker compose -f docker-compose.prod.yml pull &&
-        docker compose -f docker-compose.prod.yml up -d --build
+        docker compose -f docker-compose.prod.yml rm -f umkmgo-production-frontend &&
+        docker compose -f docker-compose.prod.yml pull umkmgo-production-frontend &&
+        docker compose -f docker-compose.prod.yml --profile frontend up -d --build
       "
   when: manual

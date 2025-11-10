@@ -47,7 +47,7 @@ export function AdminListPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Daftar Admin</h1>
           <p className="text-muted-foreground">
-            Kelola akun administrator sistem SAPA UMKM
+            Kelola akun administrator sistem UMKMGo
           </p>
         </div>
         <Button asChild variant="outline" size="sm">

@@ -26,6 +26,9 @@ import {
   ChartTooltipContent,
 } from "../components/ui/chart";
 import { Link } from "react-router-dom";
+import { useApplications } from "../contexts/ApplicationContext";
+import { useEffect } from "react";
+import { Programs, Status } from "../lib/const";
 
 const statusColors = {
   masuk: "bg-blue-500",
@@ -63,6 +66,11 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function DashboardPage() {
+  const { applications, getAllApplications } = useApplications();
+
+  useEffect(() => {
+    getAllApplications();
+  }, []);
   // Calculate statistics
   const totalApplications = mockApplications.length;
   const pendingApplications = mockApplications.filter((app) =>
@@ -77,10 +85,13 @@ export function DashboardPage() {
 
   // Status distribution data
   const statusData = Object.entries(
-    mockApplications.reduce((acc, app) => {
-      acc[app.status] = (acc[app.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>)
+    mockApplications.reduce(
+      (acc, app) => {
+        acc[app.status] = (acc[app.status] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    )
   ).map(([status, count]) => ({
     name: statusLabels[status as keyof typeof statusLabels],
     value: count,
@@ -89,10 +100,13 @@ export function DashboardPage() {
 
   // Type distribution data
   const typeData = Object.entries(
-    mockApplications.reduce((acc, app) => {
-      acc[app.type] = (acc[app.type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>)
+    mockApplications.reduce(
+      (acc, app) => {
+        acc[app.type] = (acc[app.type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    )
   ).map(([type, count]) => ({
     name: type.charAt(0).toUpperCase() + type.slice(1),
     count,
@@ -249,7 +263,12 @@ export function DashboardPage() {
                 cursor={false}
                 content={<ChartTooltipContent hideLabel />}
               />
-              <Bar dataKey="count" fill="var(--color-sky-500)" radius={20} barSize={200} />
+              <Bar
+                dataKey="count"
+                fill="var(--color-sky-500)"
+                radius={20}
+                barSize={200}
+              />
             </BarChart>
           </ChartContainer>
         </CardContent>
@@ -263,44 +282,49 @@ export function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4 flex flex-col">
-            {mockApplications.slice(0, 5).map((application) => (
-              <Link key={application.id} to={`/application/${application.id}`}>
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-                  <div className="space-y-1">
-                    <p className="font-medium">{application.applicantName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {application.businessName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      ID: {application.id}
-                    </p>
-                  </div>
-                  <div className="text-right space-y-1">
-                    <Badge
-                      variant={
-                        application.status === "disetujui"
-                          ? "success"
-                          : application.status === "ditolak"
-                          ? "destructive"
-                          : application.status === "revisi"
-                          ? "warning"
-                          : "default"
-                      }
-                    >
-                      {statusLabels[application.status]}
-                    </Badge>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {application.type}
-                    </p>
-                    {application.score && (
-                      <p className="text-xs font-medium text-primary">
-                        Skor: {application.score}/100
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            ))}
+            {applications.slice(0, 5).map(
+              (application) =>
+                application.status === Status.SCREENING && (
+                  <Link
+                    key={application.id}
+                    to={`/application/${application.id}`}
+                  >
+                    <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <div className="space-y-1">
+                        <p className="font-medium">
+                          {application.program?.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {application.umkm?.business_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          ID: {application.type === Programs.CERTIFICATION ? "CERT-" : application.type === Programs.TRAINING ? "TRAN-" : "FUND-"}{application.id}
+                        </p>
+                      </div>
+                      <div className="text-right space-y-1 capitalize">
+                        <Badge
+                          variant={
+                            application.status === Status.APPROVED
+                              ? "success"
+                              : application.status === Status.REJECTED
+                                ? "destructive"
+                                : application.status === Status.REVISED
+                                  ? "warning"
+                                  : application.status === Status.SCREENING
+                                    ? "secondary"
+                                    : "default"
+                          }
+                        >
+                          {application.status}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {application.type}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                )
+            )}
           </div>
         </CardContent>
       </Card>
