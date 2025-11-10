@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://gitlab.com/gitlab-org/gitlab/-/raw/HEAD/app/assets/javascripts/editor/schema/ci.json
-
+ 
 stages:
   - build
   - release
