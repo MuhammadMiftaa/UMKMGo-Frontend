@@ -8,7 +8,7 @@ export function Header() {
       <div className="flex items-center gap-2 px-4">
         <SidebarTrigger className="-ml-1" />
         <div className="h-4 w-px bg-sidebar-border" />
-        <h1 className="text-lg font-semibold">Dashboard UMKM</h1>
+        <h1 className="text-lg font-semibold">Dashboard UMKMGo</h1>
       </div>
 
       <div className="ml-auto flex items-center gap-2 px-4">

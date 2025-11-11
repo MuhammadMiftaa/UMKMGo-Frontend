@@ -129,7 +129,7 @@ export function TrainingPage() {
                     <h3 className="font-semibold">
                       {application.umkm?.user?.name}
                     </h3>
-                    <Badge variant="outline">FUND-{application.id}</Badge>
+                    <Badge variant="outline">TRAN-{application.id}</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {application.umkm?.business_name}

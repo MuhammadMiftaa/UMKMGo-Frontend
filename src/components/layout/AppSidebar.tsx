@@ -116,7 +116,7 @@ export function AppSidebar() {
             className="h-12 w-12"
           />
           <div className="flex flex-col">
-            <span className="text-sm font-semibold">SAPA UMKM</span>
+            <span className="text-sm font-semibold">UMKMGo</span>
             <span className="text-xs text-muted-foreground">
               Admin Dashboard
             </span>
