@@ -23,8 +23,9 @@ export function EditAdminPage() {
   const {
     rolePermissions,
     getListRolePermissions,
-    users,
-    getAllUsers,
+    getUserById,
+    currentUser,
+    updateUser,
     isLoading,
   } = useUsersManagement();
 
@@ -32,36 +33,95 @@ export function EditAdminPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    password: "",
+    confirm_password: "",
     role_id: 2,
   });
 
+  // Load role permissions
   useEffect(() => {
     getListRolePermissions();
-    getAllUsers();
   }, []);
 
+  // Load user data when ID changes
   useEffect(() => {
-    if (id && users.length > 0) {
-      const user = users.find((u) => u.id === Number(id));
-      if (user) {
-        setFormData({
-          name: user.name,
-          email: user.email,
-          role_id: 1,
-        });
-      }
+    if (id) {
+      getUserById(Number(id));
     }
-  }, [id, users]);
+  }, [id]);
+
+  // Populate form when user data is loaded
+  useEffect(() => {
+    if (currentUser) {
+      setFormData({
+        name: currentUser.name,
+        email: currentUser.email,
+        password: "",
+        confirm_password: "",
+        role_id: 2, // Default, you might want to get this from currentUser if available
+      });
+    }
+  }, [currentUser]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // TODO: Implement update user API call
-    // For now, just show success message
-    alert("User berhasil diupdate!");
-    navigate("/admin/list");
+    // Validation
+    if (formData.password && formData.password !== formData.confirm_password) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (formData.password && formData.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    if (!id) {
+      setError("User ID not found");
+      return;
+    }
+
+    const result = await updateUser(Number(id), formData);
+
+    if (result.success) {
+      alert("User berhasil diupdate!");
+      navigate("/admin/list");
+    } else {
+      setError(result.message || "Failed to update user");
+    }
   };
+
+  // Show loading state
+  if (isLoading && !currentUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if user not found
+  if (!isLoading && !currentUser && id) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-bold text-destructive">User Not Found</h2>
+          <p className="text-muted-foreground">
+            The user you're trying to edit doesn't exist.
+          </p>
+          <Button onClick={() => navigate("/admin/list")}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Admin List
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -77,6 +137,13 @@ export function EditAdminPage() {
           </Link>
         </Button>
       </div>
+
+      {error && (
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg">
+          <p className="font-medium">Error</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
 
       <Card className="max-w-2xl">
         <CardHeader>
@@ -139,11 +206,48 @@ export function EditAdminPage() {
               </select>
             </div>
 
-            {error && <div className="text-sm text-red-500">{error}</div>}
+            <div className="border-t pt-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                Leave password fields empty if you don't want to change the password
+              </p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="password">New Password (Optional)</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    placeholder="Minimal 8 karakter"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={formData.confirm_password}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        confirm_password: e.target.value,
+                      })
+                    }
+                    placeholder="Ulangi password"
+                  />
+                </div>
+              </div>
+            </div>
 
             <div className="flex gap-2 pt-4">
-              <Button type="submit" className="flex-1">
-                Update Admin
+              <Button 
+                type="submit" 
+                className="flex-1"
+                disabled={isLoading}
+              >
+                {isLoading ? "Updating..." : "Update Admin"}
               </Button>
               <Button
                 asChild

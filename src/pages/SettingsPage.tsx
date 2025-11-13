@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -10,11 +11,158 @@ import {
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useAuth } from "../contexts/AuthContext";
-import { Settings, Users, FileText, Database, Target } from "lucide-react";
+import { useSettings } from "../contexts/SettingsContext";
+import { Settings, Users, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function SettingsPage() {
   const { user } = useAuth();
+  const {
+    screeningSLA,
+    finalSLA,
+    getScreeningSLA,
+    getFinalSLA,
+    updateScreeningSLA,
+    updateFinalSLA,
+    updateProfile,
+    exportApplications,
+    exportPrograms,
+    isLoading,
+  } = useSettings();
+
+  // Profile form state
+  const [profileForm, setProfileForm] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+  });
+
+  // SLA form state
+  const [screeningSLADays, setScreeningSLADays] = useState<number>(7);
+  const [finalSLADays, setFinalSLADays] = useState<number>(14);
+
+  // Export form state
+  const [applicationsType, setApplicationsType] = useState<
+    "all" | "training" | "certification" | "funding"
+  >("all");
+  const [programsType, setProgramsType] = useState<
+    "all" | "training" | "certification" | "funding"
+  >("all");
+
+  // Load SLA data on mount
+  useEffect(() => {
+    getScreeningSLA();
+    getFinalSLA();
+  }, []);
+
+  // Update form when user changes
+  useEffect(() => {
+    if (user) {
+      setProfileForm({
+        name: user.name,
+        email: user.email,
+      });
+    }
+  }, [user]);
+
+  // Update SLA days when loaded
+  useEffect(() => {
+    if (screeningSLA) {
+      setScreeningSLADays(screeningSLA.max_days);
+    }
+  }, [screeningSLA]);
+
+  useEffect(() => {
+    if (finalSLA) {
+      setFinalSLADays(finalSLA.max_days);
+    }
+  }, [finalSLA]);
+
+  // Handle profile update
+  const handleUpdateProfile = async () => {
+    const result = await updateProfile(profileForm);
+
+    if (result.success) {
+      alert("Profile updated successfully!");
+    } else {
+      alert(result.message || "Failed to update profile");
+    }
+  };
+
+  // Handle screening SLA update
+  const handleUpdateScreeningSLA = async () => {
+    const result = await updateScreeningSLA({
+      max_days: screeningSLADays,
+      description: "Screening SLA",
+    });
+
+    if (result.success) {
+      alert("Screening SLA updated successfully!");
+    } else {
+      alert(result.message || "Failed to update screening SLA");
+    }
+  };
+
+  // Handle final SLA update
+  const handleUpdateFinalSLA = async () => {
+    const result = await updateFinalSLA({
+      max_days: finalSLADays,
+      description: "Final SLA",
+    });
+
+    if (result.success) {
+      alert("Final SLA updated successfully!");
+    } else {
+      alert(result.message || "Failed to update final SLA");
+    }
+  };
+
+  // Handle export applications
+  const handleExportApplications = async () => {
+    const result = await exportApplications({
+      file_type: "pdf",
+      application_type: applicationsType,
+    });
+
+    if (result.success && result.data) {
+      // Create download link
+      const url = window.URL.createObjectURL(result.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `applications-${applicationsType}-${new Date().toISOString()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      alert("Applications exported successfully!");
+    } else {
+      alert(result.message || "Failed to export applications");
+    }
+  };
+
+  // Handle export programs
+  const handleExportPrograms = async () => {
+    const result = await exportPrograms({
+      file_type: "pdf",
+      application_type: programsType,
+    });
+
+    if (result.success && result.data) {
+      // Create download link
+      const url = window.URL.createObjectURL(result.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `programs-${programsType}-${new Date().toISOString()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      alert("Programs exported successfully!");
+    } else {
+      alert(result.message || "Failed to export programs");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -26,8 +174,7 @@ export function SettingsPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* User Management - Superadmin only */}
-        {/* {user?.role === "superadmin" && ( */}
+        {/* User Management */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -48,120 +195,6 @@ export function SettingsPage() {
             </Button>
           </CardContent>
         </Card>
-        {/* )} */}
-
-        {/* Scoring Configuration - Superadmin only */}
-        {/* {user?.role === "superadmin" && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Konfigurasi Penilaian
-              </CardTitle>
-              <CardDescription>Atur bobot dan kriteria penilaian</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Bobot Kategori Afirmatif (%)</label>
-                <Input type="number" defaultValue="30" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Bobot Wilayah 3T (%)</label>
-                <Input type="number" defaultValue="25" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Bobot Kepemilikan NIB (%)</label>
-                <Input type="number" defaultValue="20" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Bobot Omzet / Skala Usaha (%)</label>
-                <Input type="number" defaultValue="25" />
-              </div>
-              <Button className="w-full">Simpan Konfigurasi</Button>
-            </CardContent>
-          </Card>
-        )} */}
-
-        {/* {user?.role === "superadmin" && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Konfigurasi Cutoff Scoring
-              </CardTitle>
-              <CardDescription>Atur batas skor untuk status pengajuan</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Batas Lolos (≥)</label>
-                <Input type="number" defaultValue="75" />
-                <p className="text-xs text-muted-foreground">Skor minimum untuk status "Lolos"</p>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Batas Hold (≥)</label>
-                <Input type="number" defaultValue="55" />
-                <p className="text-xs text-muted-foreground">Skor minimum untuk status "Hold" (55-74)</p>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Batas Gagal (&lt;)</label>
-                <Input type="number" defaultValue="55" disabled />
-                <p className="text-xs text-muted-foreground">Skor di bawah 55 akan berstatus "Gagal"</p>
-              </div>
-              <Button className="w-full">Simpan Cutoff</Button>
-            </CardContent>
-          </Card>
-        )} */}
-
-        {/* Document Templates */}
-        {/* <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Template Dokumen
-            </CardTitle>
-            <CardDescription>Kelola template surat dan dokumen</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button variant="outline" className="w-full bg-transparent">
-              Template Undangan Pelatihan
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent">
-              Template Voucher Sertifikasi
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent">
-              Template Kontrak Pendanaan
-            </Button>
-            {user?.role === "superadmin" && <Button className="w-full">Edit Template</Button>}
-          </CardContent>
-        </Card> */}
-
-        {/* SLA Configuration - Superadmin only */}
-        {/* {user?.role === "superadmin" && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5" />
-                Konfigurasi SLA
-              </CardTitle>
-              <CardDescription>Atur batas waktu proses per tahap</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Screening (hari)</label>
-                <Input type="number" defaultValue="3" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Penilaian (hari)</label>
-                <Input type="number" defaultValue="5" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Keputusan (hari)</label>
-                <Input type="number" defaultValue="2" />
-              </div>
-              <Button className="w-full">Simpan SLA</Button>
-            </CardContent>
-          </Card>
-        )} */}
 
         {/* Profile Settings */}
         <Card>
@@ -172,11 +205,21 @@ export function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Nama</label>
-              <Input defaultValue={user?.name} />
+              <Input
+                value={profileForm.name}
+                onChange={(e) =>
+                  setProfileForm({ ...profileForm, name: e.target.value })
+                }
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Email</label>
-              <Input defaultValue={user?.email} />
+              <Input
+                value={profileForm.email}
+                onChange={(e) =>
+                  setProfileForm({ ...profileForm, email: e.target.value })
+                }
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Role</label>
@@ -185,19 +228,25 @@ export function SettingsPage() {
                 disabled
               />
             </div>
-            <Button className="w-full mt-auto">Update Profil</Button>
+            <Button
+              className="w-full mt-auto"
+              onClick={handleUpdateProfile}
+              disabled={isLoading}
+            >
+              {isLoading ? "Updating..." : "Update Profil"}
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Decision Making Configuration */}
+        {/* SLA Configuration */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              Pengaturan Waktu Keputusan
+              Konfigurasi SLA & Cetak Laporan
             </CardTitle>
             <CardDescription>
-              Atur batas waktu maksimal pengambilan keputusan
+              Atur batas waktu maksimal pengambilan keputusan dan cetak laporan
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -206,46 +255,103 @@ export function SettingsPage() {
                 <label className="text-sm font-medium">Screening (hari)</label>
                 <Input
                   type="number"
-                  defaultValue="7"
+                  value={screeningSLADays}
+                  onChange={(e) =>
+                    setScreeningSLADays(Number.parseInt(e.target.value))
+                  }
                   placeholder="Jumlah hari"
                 />
               </div>
-              <Button className="mt-7">Simpan</Button>
+              <Button
+                className="mt-7"
+                onClick={handleUpdateScreeningSLA}
+                disabled={isLoading}
+              >
+                {isLoading ? "..." : "Simpan"}
+              </Button>
             </div>
+
             <div className="flex items-center gap-2">
               <div className="flex-1 space-y-2">
                 <label className="text-sm font-medium">Final (hari)</label>
                 <Input
                   type="number"
-                  defaultValue="14"
+                  value={finalSLADays}
+                  onChange={(e) =>
+                    setFinalSLADays(Number.parseInt(e.target.value))
+                  }
                   placeholder="Jumlah hari"
                 />
               </div>
-              <Button className="mt-7">Simpan</Button>
+              <Button
+                className="mt-7"
+                onClick={handleUpdateFinalSLA}
+                disabled={isLoading}
+              >
+                {isLoading ? "..." : "Simpan"}
+              </Button>
             </div>
+
             <div className="flex items-center gap-2">
               <div className="flex-1 space-y-2">
                 <label className="text-sm font-medium">Laporan Pengajuan</label>
-                <select className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm">
+                <select
+                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  value={applicationsType}
+                  onChange={(e) =>
+                    setApplicationsType(
+                      e.target.value as
+                        | "all"
+                        | "training"
+                        | "certification"
+                        | "funding"
+                    )
+                  }
+                >
                   <option value="all">Semua Tipe</option>
                   <option value="funding">Pendanaan</option>
                   <option value="training">Pelatihan</option>
                   <option value="certification">Sertifikasi</option>
                 </select>
               </div>
-              <Button className="mt-7">Cetak Laporan</Button>
+              <Button
+                className="mt-7"
+                onClick={handleExportApplications}
+                disabled={isLoading}
+              >
+                {isLoading ? "Exporting..." : "Cetak Laporan"}
+              </Button>
             </div>
+
             <div className="flex items-center gap-2">
               <div className="flex-1 space-y-2">
                 <label className="text-sm font-medium">Laporan Program</label>
-                <select className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm">
+                <select
+                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  value={programsType}
+                  onChange={(e) =>
+                    setProgramsType(
+                      e.target.value as
+                        | "all"
+                        | "training"
+                        | "certification"
+                        | "funding"
+                    )
+                  }
+                >
                   <option value="all">Semua Tipe</option>
                   <option value="funding">Pendanaan</option>
                   <option value="training">Pelatihan</option>
                   <option value="certification">Sertifikasi</option>
                 </select>
               </div>
-              <Button className="mt-7">Cetak Laporan</Button>
+              <Button
+                className="mt-7"
+                onClick={handleExportPrograms}
+                disabled={isLoading}
+              >
+                {isLoading ? "Exporting..." : "Cetak Laporan"}
+              </Button>
             </div>
           </CardContent>
         </Card>

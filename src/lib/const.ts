@@ -1,3 +1,5 @@
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/v1";
+
 export const Permissions = {
   SCREENING_TRAINING: "SCREENING_TRAINING",
   MANAGE_TRAINING_PROGRAMS: "MANAGE_TRAINING_PROGRAMS",

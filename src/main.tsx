@@ -7,6 +7,8 @@ import { ProgramsProvider } from "../src/contexts/ProgramContext";
 import { ApplicationsProvider } from "../src/contexts/ApplicationContext";
 import App from "./App.tsx";
 import "./globals.css";
+import { SettingsProvider } from "./contexts/SettingsContext.tsx";
+import { DashboardProvider } from "./contexts/DashboardContext.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -15,7 +17,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <UsersManagementProvider>
           <ProgramsProvider>
             <ApplicationsProvider>
-              <App />
+              <SettingsProvider>
+                <DashboardProvider>
+                  <App />
+                </DashboardProvider>
+              </SettingsProvider>
             </ApplicationsProvider>
           </ProgramsProvider>
         </UsersManagementProvider>

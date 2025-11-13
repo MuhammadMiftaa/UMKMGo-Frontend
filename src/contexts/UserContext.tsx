@@ -3,6 +3,7 @@
 import type React from "react"
 import { createContext, useContext, useState } from "react"
 import { useAuth } from "./AuthContext"
+import { API_BASE_URL } from "../lib/const"
 
 // ============================================
 // TYPES
@@ -91,8 +92,6 @@ interface UsersManagementContextType {
 // ============================================
 // API UTILITIES
 // ============================================
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/v1"
 
 async function apiCall<T>(
   endpoint: string,

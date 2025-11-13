@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -6,7 +7,6 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { mockApplications } from "../data/mockData";
 import {
   BarChart,
   Bar,
@@ -27,36 +27,10 @@ import {
 } from "../components/ui/chart";
 import { Link } from "react-router-dom";
 import { useApplications } from "../contexts/ApplicationContext";
-import { useEffect } from "react";
+import { useDashboard } from "../contexts/DashboardContext";
 import { Programs, Status } from "../lib/const";
 
-const statusColors = {
-  masuk: "bg-blue-500",
-  screening: "bg-yellow-500",
-  penilaian: "bg-orange-500",
-  keputusan: "bg-purple-500",
-  disetujui: "bg-green-500",
-  ditolak: "bg-red-500",
-  revisi: "bg-gray-500",
-  dibatalkan: "bg-gray-400",
-};
-
-const statusLabels = {
-  masuk: "Masuk",
-  screening: "Screening",
-  penilaian: "Penilaian",
-  keputusan: "Keputusan",
-  disetujui: "Disetujui",
-  ditolak: "Ditolak",
-  revisi: "Revisi",
-  dibatalkan: "Dibatalkan",
-};
-
-const cardTypeData = [
-  { name: "Kartu Produktif", count: 245 },
-  { name: "Kartu Afirmatif", count: 189 },
-  { name: "Tidak memiliki keduanya", count: 156 },
-];
+const COLORS = ["#6366f1", "#f59e0b", "#10b981"];
 
 const chartConfig = {
   count: {
@@ -67,52 +41,51 @@ const chartConfig = {
 
 export function DashboardPage() {
   const { applications, getAllApplications } = useApplications();
+  const {
+    cardTypeData,
+    statusSummary,
+    statusDetail,
+    applicationByType,
+    fetchAllDashboardData,
+    isLoading,
+  } = useDashboard();
 
   useEffect(() => {
+    // Fetch all data on mount
+    fetchAllDashboardData();
     getAllApplications();
   }, []);
-  // Calculate statistics
-  const totalApplications = mockApplications.length;
-  const pendingApplications = mockApplications.filter((app) =>
-    ["masuk", "screening", "penilaian", "keputusan"].includes(app.status)
-  ).length;
-  const approvedApplications = mockApplications.filter(
-    (app) => app.status === "disetujui"
-  ).length;
-  const rejectedApplications = mockApplications.filter(
-    (app) => app.status === "ditolak"
-  ).length;
 
-  // Status distribution data
-  const statusData = Object.entries(
-    mockApplications.reduce(
-      (acc, app) => {
-        acc[app.status] = (acc[app.status] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    )
-  ).map(([status, count]) => ({
-    name: statusLabels[status as keyof typeof statusLabels],
-    value: count,
-    color: statusColors[status as keyof typeof statusColors],
-  }));
+  // Transform status detail for pie chart
+  const statusData = statusDetail
+    ? [
+        { name: "Screening", value: statusDetail.screening },
+        { name: "Revised", value: statusDetail.revised },
+        { name: "Final", value: statusDetail.final },
+        { name: "Approved", value: statusDetail.approved },
+        { name: "Rejected", value: statusDetail.rejected },
+      ].filter((item) => item.value > 0)
+    : [];
 
-  // Type distribution data
-  const typeData = Object.entries(
-    mockApplications.reduce(
-      (acc, app) => {
-        acc[app.type] = (acc[app.type] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    )
-  ).map(([type, count]) => ({
-    name: type.charAt(0).toUpperCase() + type.slice(1),
-    count,
-  }));
+  // Transform application by type for bar chart
+  const typeData = applicationByType
+    ? [
+        { name: "Training", count: applicationByType.training },
+        { name: "Certification", count: applicationByType.certification },
+        { name: "Funding", count: applicationByType.funding },
+      ]
+    : [];
 
-  const COLORS = ["#6366f1", "#f59e0b", "#10b981"];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -132,7 +105,9 @@ export function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalApplications}</div>
+            <div className="text-2xl font-bold">
+              {statusSummary?.total_applications || 0}
+            </div>
             <p className="text-xs text-muted-foreground">
               Semua pengajuan yang masuk
             </p>
@@ -144,7 +119,9 @@ export function DashboardPage() {
             <CardTitle className="text-sm font-medium">Dalam Proses</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingApplications}</div>
+            <div className="text-2xl font-bold">
+              {statusSummary?.in_process || 0}
+            </div>
             <p className="text-xs text-muted-foreground">Menunggu tindakan</p>
           </CardContent>
         </Card>
@@ -155,7 +132,7 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {approvedApplications}
+              {statusSummary?.approved || 0}
             </div>
             <p className="text-xs text-muted-foreground">Pengajuan berhasil</p>
           </CardContent>
@@ -167,7 +144,7 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {rejectedApplications}
+              {statusSummary?.rejected || 0}
             </div>
             <p className="text-xs text-muted-foreground">Pengajuan ditolak</p>
           </CardContent>
@@ -182,28 +159,34 @@ export function DashboardPage() {
             <CardDescription>Sebaran status pengajuan saat ini</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {statusData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={statusData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) => `${name}: ${value}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {statusData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                No data available
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -215,20 +198,26 @@ export function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={typeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#6366f1" />
-              </BarChart>
-            </ResponsiveContainer>
+            {typeData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={typeData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#6366f1" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                No data available
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Added horizontal bar chart for card type distribution */}
+      {/* Card Type Distribution */}
       <Card>
         <CardHeader>
           <CardTitle>Distribusi Jenis Kartu</CardTitle>
@@ -237,40 +226,46 @@ export function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig}>
-            <BarChart
-              accessibilityLayer
-              barGap={0.05}
-              barCategoryGap={0.05}
-              data={cardTypeData}
-              layout="vertical"
-              margin={{
-                left: -20,
-              }}
-            >
-              <XAxis type="number" dataKey="count" hide />
-              <YAxis
-                dataKey="name"
-                type="category"
-                tickLine={false}
-                tickMargin={1}
-                axisLine={false}
-                tickFormatter={(value) => value.slice(0, 100)}
-                width={200}
-                fontSize={14}
-              />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
-              />
-              <Bar
-                dataKey="count"
-                fill="var(--color-sky-500)"
-                radius={20}
-                barSize={200}
-              />
-            </BarChart>
-          </ChartContainer>
+          {cardTypeData.length > 0 ? (
+            <ChartContainer config={chartConfig}>
+              <BarChart
+                accessibilityLayer
+                barGap={0.05}
+                barCategoryGap={0.05}
+                data={cardTypeData}
+                layout="vertical"
+                margin={{
+                  left: -20,
+                }}
+              >
+                <XAxis type="number" dataKey="count" hide />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  tickLine={false}
+                  tickMargin={1}
+                  axisLine={false}
+                  tickFormatter={(value) => value.slice(0, 100)}
+                  width={200}
+                  fontSize={14}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent hideLabel />}
+                />
+                <Bar
+                  dataKey="count"
+                  fill="var(--color-sky-500)"
+                  radius={20}
+                  barSize={200}
+                />
+              </BarChart>
+            </ChartContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+              No data available
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -298,7 +293,13 @@ export function DashboardPage() {
                           {application.umkm?.business_name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          ID: {application.type === Programs.CERTIFICATION ? "CERT-" : application.type === Programs.TRAINING ? "TRAN-" : "FUND-"}{application.id}
+                          ID:{" "}
+                          {application.type === Programs.CERTIFICATION
+                            ? "CERT-"
+                            : application.type === Programs.TRAINING
+                              ? "TRAN-"
+                              : "FUND-"}
+                          {application.id}
                         </p>
                       </div>
                       <div className="text-right space-y-1 capitalize">

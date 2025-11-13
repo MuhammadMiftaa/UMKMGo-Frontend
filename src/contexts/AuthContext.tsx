@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
+import { API_BASE_URL } from "../lib/const"
 
 // ============================================
 // TYPES
@@ -62,8 +63,6 @@ interface ErrorResponse {
 // ============================================
 // API UTILITIES
 // ============================================
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/v1"
 
 // Helper function to parse JWT token
 function parseJwt(token: string): User | null {
