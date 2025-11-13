@@ -11,10 +11,11 @@ import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Input } from "../components/ui/input";
 import { ArrowLeft, Search, Edit, Trash2, Users } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useUsersManagement } from "../contexts/UserContext";
 
 export function AdminListPage() {
+  const Navigate = useNavigate();
   const { getAllUsers, users, deleteUser } = useUsersManagement();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,6 +41,10 @@ export function AdminListPage() {
       getAllUsers(); // Refresh the list after deletion
     }
   };
+
+  const handleEdit = (adminId: number) => {
+    Navigate(`/admin/edit/${adminId}`);
+  }
 
   return (
     <div className="space-y-6">
@@ -133,7 +138,7 @@ export function AdminListPage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(admin.id)}>
                     <Edit className="h-4 w-4 mr-1" />
                     Edit
                   </Button>

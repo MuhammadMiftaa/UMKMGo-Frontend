@@ -1,45 +1,53 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { Button } from "../components/ui/button"
-import { Input } from "../components/ui/input"
-import { useAuth } from "../contexts/AuthContext"
-import { Settings, Users, FileText, Database, Target } from "lucide-react"
-import { Link } from "react-router-dom"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { useAuth } from "../contexts/AuthContext";
+import { Settings, Users, FileText, Database, Target } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function SettingsPage() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Pengaturan</h1>
-        <p className="text-muted-foreground">Kelola konfigurasi sistem dan pengaturan admin</p>
+        <p className="text-muted-foreground">
+          Kelola konfigurasi sistem dan pengaturan admin
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* User Management - Superadmin only */}
         {/* {user?.role === "superadmin" && ( */}
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Manajemen Pengguna
-              </CardTitle>
-              <CardDescription>Kelola akun admin dan hak akses</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button asChild className="w-full">
-                <Link to="/admin/add">Tambah Admin Baru</Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full bg-transparent">
-                <Link to="/admin/list">Lihat Daftar Admin</Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full bg-transparent">
-                <Link to="/admin/permissions">Atur Hak Akses</Link>
-              </Button>
-            </CardContent>
-          </Card>
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Manajemen Pengguna
+            </CardTitle>
+            <CardDescription>Kelola akun admin dan hak akses</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button asChild className="w-full">
+              <Link to="/admin/add">Tambah Admin Baru</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full bg-transparent">
+              <Link to="/admin/list">Lihat Daftar Admin</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full bg-transparent">
+              <Link to="/admin/permissions">Atur Hak Akses</Link>
+            </Button>
+          </CardContent>
+        </Card>
         {/* )} */}
 
         {/* Scoring Configuration - Superadmin only */}
@@ -172,15 +180,76 @@ export function SettingsPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Role</label>
-              <Input value={user?.role_name?.replace("_", " ").toUpperCase()} disabled />
+              <Input
+                value={user?.role_name?.replace("_", " ").toUpperCase()}
+                disabled
+              />
             </div>
-            <Button className="w-full">Update Profil</Button>
-            <Button variant="outline" className="w-full bg-transparent">
-              Ganti Password
-            </Button>
+            <Button className="w-full mt-auto">Update Profil</Button>
+          </CardContent>
+        </Card>
+
+        {/* Decision Making Configuration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Pengaturan Waktu Keputusan
+            </CardTitle>
+            <CardDescription>
+              Atur batas waktu maksimal pengambilan keputusan
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 space-y-2">
+                <label className="text-sm font-medium">Screening (hari)</label>
+                <Input
+                  type="number"
+                  defaultValue="7"
+                  placeholder="Jumlah hari"
+                />
+              </div>
+              <Button className="mt-7">Simpan</Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 space-y-2">
+                <label className="text-sm font-medium">Final (hari)</label>
+                <Input
+                  type="number"
+                  defaultValue="14"
+                  placeholder="Jumlah hari"
+                />
+              </div>
+              <Button className="mt-7">Simpan</Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 space-y-2">
+                <label className="text-sm font-medium">Laporan Pengajuan</label>
+                <select className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm">
+                  <option value="all">Semua Tipe</option>
+                  <option value="funding">Pendanaan</option>
+                  <option value="training">Pelatihan</option>
+                  <option value="certification">Sertifikasi</option>
+                </select>
+              </div>
+              <Button className="mt-7">Cetak Laporan</Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 space-y-2">
+                <label className="text-sm font-medium">Laporan Program</label>
+                <select className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm">
+                  <option value="all">Semua Tipe</option>
+                  <option value="funding">Pendanaan</option>
+                  <option value="training">Pelatihan</option>
+                  <option value="certification">Sertifikasi</option>
+                </select>
+              </div>
+              <Button className="mt-7">Cetak Laporan</Button>
+            </div>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }

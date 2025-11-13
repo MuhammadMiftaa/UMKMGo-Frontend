@@ -16,6 +16,7 @@ import ProgramFundingsPage from "./pages/programs/FundingListPage";
 import CreateProgramPage from "./pages/programs/CreateProgramPage";
 import ProgramDetailPage from "./pages/programs/ProgramDetailPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { EditAdminPage } from "./pages/EditAdminPage";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="application/:id" element={<ApplicationDetailPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="admin/add" element={<AddAdminPage />} />
+        <Route path="admin/edit/:id" element={<EditAdminPage />} />
         <Route path="admin/list" element={<AdminListPage />} />
         <Route path="admin/permissions" element={<AdminPermissionsPage />} />
 
