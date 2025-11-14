@@ -14,12 +14,13 @@ import { useAuth } from "../contexts/AuthContext";
 import { useSettings } from "../contexts/SettingsContext";
 import { Settings, Users, FileText, FileSpreadsheet } from "lucide-react";
 import { Link } from "react-router-dom";
-import { 
-  showSuccessToast, 
-  showErrorToast, 
+import {
+  showSuccessToast,
+  showErrorToast,
   showWarningToast,
-  showConfirmAlert 
+  showConfirmAlert,
 } from "../lib/toast";
+import { Permissions } from "../lib/const";
 
 export function SettingsPage() {
   const { user } = useAuth();
@@ -50,12 +51,16 @@ export function SettingsPage() {
   const [applicationsType, setApplicationsType] = useState<
     "all" | "training" | "certification" | "funding"
   >("all");
-  const [applicationsFileType, setApplicationsFileType] = useState<"pdf" | "excel">("pdf");
-  
+  const [applicationsFileType, setApplicationsFileType] = useState<
+    "pdf" | "excel"
+  >("pdf");
+
   const [programsType, setProgramsType] = useState<
     "all" | "training" | "certification" | "funding"
   >("all");
-  const [programsFileType, setProgramsFileType] = useState<"pdf" | "excel">("pdf");
+  const [programsFileType, setProgramsFileType] = useState<"pdf" | "excel">(
+    "pdf"
+  );
 
   // Loading states
   const [profileLoading, setProfileLoading] = useState(false);
@@ -99,11 +104,11 @@ export function SettingsPage() {
     }
 
     showConfirmAlert({
-      title: 'Konfirmasi Update Profil',
+      title: "Konfirmasi Update Profil",
       message: "Apakah Anda yakin ingin memperbarui profil Anda?",
       confirmText: "Ya, Update",
       cancelText: "Batal",
-      type: 'question',
+      type: "question",
       onConfirm: async () => {
         setProfileLoading(true);
         try {
@@ -131,11 +136,11 @@ export function SettingsPage() {
     }
 
     showConfirmAlert({
-      title: 'Konfirmasi Update SLA',
+      title: "Konfirmasi Update SLA",
       message: `Apakah Anda yakin ingin mengubah SLA Screening menjadi ${screeningSLADays} hari?`,
       confirmText: "Ya, Update",
       cancelText: "Batal",
-      type: 'question',
+      type: "question",
       onConfirm: async () => {
         setSlaLoading(true);
         try {
@@ -166,11 +171,11 @@ export function SettingsPage() {
     }
 
     showConfirmAlert({
-      title: 'Konfirmasi Update SLA',
+      title: "Konfirmasi Update SLA",
       message: `Apakah Anda yakin ingin mengubah SLA Final menjadi ${finalSLADays} hari?`,
       confirmText: "Ya, Update",
       cancelText: "Batal",
-      type: 'question',
+      type: "question",
       onConfirm: async () => {
         setSlaLoading(true);
         try {
@@ -205,7 +210,7 @@ export function SettingsPage() {
       if (result.success && result.data) {
         // Determine file extension
         const fileExt = applicationsFileType === "pdf" ? "pdf" : "xlsx";
-        
+
         // Create download link
         const url = window.URL.createObjectURL(result.data);
         const link = document.createElement("a");
@@ -216,7 +221,9 @@ export function SettingsPage() {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
 
-        showSuccessToast(`Laporan pengajuan berhasil diunduh (${applicationsFileType.toUpperCase()})!`);
+        showSuccessToast(
+          `Laporan pengajuan berhasil diunduh (${applicationsFileType.toUpperCase()})!`
+        );
       } else {
         showErrorToast(result.message || "Gagal mengekspor laporan pengajuan");
       }
@@ -239,7 +246,7 @@ export function SettingsPage() {
       if (result.success && result.data) {
         // Determine file extension
         const fileExt = programsFileType === "pdf" ? "pdf" : "xlsx";
-        
+
         // Create download link
         const url = window.URL.createObjectURL(result.data);
         const link = document.createElement("a");
@@ -250,7 +257,9 @@ export function SettingsPage() {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
 
-        showSuccessToast(`Laporan program berhasil diunduh (${programsFileType.toUpperCase()})!`);
+        showSuccessToast(
+          `Laporan program berhasil diunduh (${programsFileType.toUpperCase()})!`
+        );
       } else {
         showErrorToast(result.message || "Gagal mengekspor laporan program");
       }
@@ -272,26 +281,47 @@ export function SettingsPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* User Management */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Manajemen Pengguna
-            </CardTitle>
-            <CardDescription>Kelola akun admin dan hak akses</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button asChild className="w-full">
-              <Link to="/admin/add">Tambah Admin Baru</Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full bg-transparent">
-              <Link to="/admin/list">Lihat Daftar Admin</Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full bg-transparent">
-              <Link to="/admin/permissions">Atur Hak Akses</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        {(user?.permissions.includes(Permissions.USER_MANAGEMENT) ||
+          user?.permissions.includes(
+            Permissions.ROLE_PERMISSIONS_MANAGEMENT
+          )) && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Manajemen Pengguna
+              </CardTitle>
+              <CardDescription>Kelola akun admin dan hak akses</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {user?.permissions.includes(Permissions.USER_MANAGEMENT) && (
+                <>
+                  <Button asChild className="w-full">
+                    <Link to="/admin/add">Tambah Admin Baru</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full bg-transparent"
+                  >
+                    <Link to="/admin/list">Lihat Daftar Admin</Link>
+                  </Button>
+                </>
+              )}
+              {user?.permissions.includes(
+                Permissions.ROLE_PERMISSIONS_MANAGEMENT
+              ) && (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full bg-transparent"
+                >
+                  <Link to="/admin/permissions">Atur Hak Akses</Link>
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Profile Settings */}
         <Card>
@@ -345,220 +375,236 @@ export function SettingsPage() {
         </Card>
 
         {/* SLA Configuration */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Konfigurasi SLA
-            </CardTitle>
-            <CardDescription>
-              Atur batas waktu maksimal pengambilan keputusan
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="flex-1 space-y-2">
-                <label className="text-sm font-medium">Screening (hari)</label>
-                <Input
-                  type="number"
-                  value={screeningSLADays}
-                  onChange={(e) =>
-                    setScreeningSLADays(Number.parseInt(e.target.value))
-                  }
-                  placeholder="Jumlah hari"
-                  disabled={slaLoading}
-                />
-              </div>
-              <Button
-                className="mt-7"
-                onClick={handleUpdateScreeningSLA}
-                disabled={slaLoading || isLoading}
-              >
-                {slaLoading ? "..." : "Simpan"}
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex-1 space-y-2">
-                <label className="text-sm font-medium">Final (hari)</label>
-                <Input
-                  type="number"
-                  value={finalSLADays}
-                  onChange={(e) =>
-                    setFinalSLADays(Number.parseInt(e.target.value))
-                  }
-                  placeholder="Jumlah hari"
-                  disabled={slaLoading}
-                />
-              </div>
-              <Button
-                className="mt-7"
-                onClick={handleUpdateFinalSLA}
-                disabled={slaLoading || isLoading}
-              >
-                {slaLoading ? "..." : "Simpan"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Export Reports - Applications */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Cetak Laporan Pengajuan
-            </CardTitle>
-            <CardDescription>
-              Ekspor data pengajuan dalam format PDF atau Excel
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tipe Pengajuan</label>
-                <select
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-                  value={applicationsType}
-                  onChange={(e) =>
-                    setApplicationsType(
-                      e.target.value as
-                        | "all"
-                        | "training"
-                        | "certification"
-                        | "funding"
-                    )
-                  }
-                  disabled={exportLoading}
-                >
-                  <option value="all">Semua Tipe</option>
-                  <option value="funding">Pendanaan</option>
-                  <option value="training">Pelatihan</option>
-                  <option value="certification">Sertifikasi</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Format File</label>
-                <select
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-                  value={applicationsFileType}
-                  onChange={(e) =>
-                    setApplicationsFileType(e.target.value as "pdf" | "excel")
-                  }
-                  disabled={exportLoading}
-                >
-                  <option value="pdf">PDF</option>
-                  <option value="excel">Excel</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium opacity-0">Action</label>
+        {user?.permissions.includes(Permissions.SLA_CONFIGURATION) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Konfigurasi SLA
+              </CardTitle>
+              <CardDescription>
+                Atur batas waktu maksimal pengambilan keputusan
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 space-y-2">
+                  <label className="text-sm font-medium">
+                    Screening (hari)
+                  </label>
+                  <Input
+                    type="number"
+                    value={screeningSLADays}
+                    onChange={(e) =>
+                      setScreeningSLADays(Number.parseInt(e.target.value))
+                    }
+                    placeholder="Jumlah hari"
+                    disabled={slaLoading}
+                  />
+                </div>
                 <Button
-                  className="w-full"
-                  onClick={handleExportApplications}
-                  disabled={exportLoading}
+                  className="mt-7"
+                  onClick={handleUpdateScreeningSLA}
+                  disabled={slaLoading || isLoading}
                 >
-                  {exportLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                      Mengekspor...
-                    </>
-                  ) : (
-                    <>
-                      {applicationsFileType === "pdf" ? (
-                        <FileText className="h-4 w-4 mr-2" />
-                      ) : (
-                        <FileSpreadsheet className="h-4 w-4 mr-2" />
-                      )}
-                      Cetak Laporan
-                    </>
-                  )}
+                  {slaLoading ? "..." : "Simpan"}
                 </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Export Reports - Programs */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Cetak Laporan Program
-            </CardTitle>
-            <CardDescription>
-              Ekspor data program dalam format PDF atau Excel
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tipe Program</label>
-                <select
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-                  value={programsType}
-                  onChange={(e) =>
-                    setProgramsType(
-                      e.target.value as
-                        | "all"
-                        | "training"
-                        | "certification"
-                        | "funding"
-                    )
-                  }
-                  disabled={exportLoading}
-                >
-                  <option value="all">Semua Tipe</option>
-                  <option value="funding">Pendanaan</option>
-                  <option value="training">Pelatihan</option>
-                  <option value="certification">Sertifikasi</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Format File</label>
-                <select
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-                  value={programsFileType}
-                  onChange={(e) =>
-                    setProgramsFileType(e.target.value as "pdf" | "excel")
-                  }
-                  disabled={exportLoading}
-                >
-                  <option value="pdf">PDF</option>
-                  <option value="excel">Excel</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium opacity-0">Action</label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 space-y-2">
+                  <label className="text-sm font-medium">Final (hari)</label>
+                  <Input
+                    type="number"
+                    value={finalSLADays}
+                    onChange={(e) =>
+                      setFinalSLADays(Number.parseInt(e.target.value))
+                    }
+                    placeholder="Jumlah hari"
+                    disabled={slaLoading}
+                  />
+                </div>
                 <Button
-                  className="w-full"
-                  onClick={handleExportPrograms}
-                  disabled={exportLoading}
+                  className="mt-7"
+                  onClick={handleUpdateFinalSLA}
+                  disabled={slaLoading || isLoading}
                 >
-                  {exportLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                      Mengekspor...
-                    </>
-                  ) : (
-                    <>
-                      {programsFileType === "pdf" ? (
-                        <FileText className="h-4 w-4 mr-2" />
-                      ) : (
-                        <FileSpreadsheet className="h-4 w-4 mr-2" />
-                      )}
-                      Cetak Laporan
-                    </>
-                  )}
+                  {slaLoading ? "..." : "Simpan"}
                 </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
+
+        {user?.permissions.includes(Permissions.GENERATE_REPORT) && (
+          <>
+            {/* Export Reports - Applications */}
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Cetak Laporan Pengajuan
+                </CardTitle>
+                <CardDescription>
+                  Ekspor data pengajuan dalam format PDF atau Excel
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Tipe Pengajuan
+                    </label>
+                    <select
+                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                      value={applicationsType}
+                      onChange={(e) =>
+                        setApplicationsType(
+                          e.target.value as
+                            | "all"
+                            | "training"
+                            | "certification"
+                            | "funding"
+                        )
+                      }
+                      disabled={exportLoading}
+                    >
+                      <option value="all">Semua Tipe</option>
+                      <option value="funding">Pendanaan</option>
+                      <option value="training">Pelatihan</option>
+                      <option value="certification">Sertifikasi</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Format File</label>
+                    <select
+                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                      value={applicationsFileType}
+                      onChange={(e) =>
+                        setApplicationsFileType(
+                          e.target.value as "pdf" | "excel"
+                        )
+                      }
+                      disabled={exportLoading}
+                    >
+                      <option value="pdf">PDF</option>
+                      <option value="excel">Excel</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium opacity-0">
+                      Action
+                    </label>
+                    <Button
+                      className="w-full"
+                      onClick={handleExportApplications}
+                      disabled={exportLoading}
+                    >
+                      {exportLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                          Mengekspor...
+                        </>
+                      ) : (
+                        <>
+                          {applicationsFileType === "pdf" ? (
+                            <FileText className="h-4 w-4 mr-2" />
+                          ) : (
+                            <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          )}
+                          Cetak Laporan
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Export Reports - Programs */}
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Cetak Laporan Program
+                </CardTitle>
+                <CardDescription>
+                  Ekspor data program dalam format PDF atau Excel
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tipe Program</label>
+                    <select
+                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                      value={programsType}
+                      onChange={(e) =>
+                        setProgramsType(
+                          e.target.value as
+                            | "all"
+                            | "training"
+                            | "certification"
+                            | "funding"
+                        )
+                      }
+                      disabled={exportLoading}
+                    >
+                      <option value="all">Semua Tipe</option>
+                      <option value="funding">Pendanaan</option>
+                      <option value="training">Pelatihan</option>
+                      <option value="certification">Sertifikasi</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Format File</label>
+                    <select
+                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                      value={programsFileType}
+                      onChange={(e) =>
+                        setProgramsFileType(e.target.value as "pdf" | "excel")
+                      }
+                      disabled={exportLoading}
+                    >
+                      <option value="pdf">PDF</option>
+                      <option value="excel">Excel</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium opacity-0">
+                      Action
+                    </label>
+                    <Button
+                      className="w-full"
+                      onClick={handleExportPrograms}
+                      disabled={exportLoading}
+                    >
+                      {exportLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                          Mengekspor...
+                        </>
+                      ) : (
+                        <>
+                          {programsFileType === "pdf" ? (
+                            <FileText className="h-4 w-4 mr-2" />
+                          ) : (
+                            <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          )}
+                          Cetak Laporan
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );
