@@ -4,6 +4,12 @@ import type React from "react";
 import { createContext, useContext, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { API_BASE_URL } from "../lib/const";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showConfirmToast,
+} from "../lib/toast";
+import { startProgress, stopProgress } from "../lib/nprogress";
 
 // ============================================
 // TYPES
@@ -218,6 +224,7 @@ export function ApplicationsProvider({
     try {
       setIsLoading(true);
       setError(null);
+      startProgress();
 
       const queryParams = filterType ? `?type=${filterType}` : "";
       const response = await apiCall<Application[]>(
@@ -233,9 +240,11 @@ export function ApplicationsProvider({
       const errorMessage =
         err instanceof Error ? err.message : "Failed to fetch applications";
       setError(errorMessage);
+      showErrorToast(errorMessage);
       console.error("Get all applications error:", err);
     } finally {
       setIsLoading(false);
+      stopProgress();
     }
   };
 
@@ -244,6 +253,7 @@ export function ApplicationsProvider({
     try {
       setIsLoading(true);
       setError(null);
+      startProgress();
 
       const response = await apiCall<Application>(
         `/applications/${id}`,
@@ -258,9 +268,11 @@ export function ApplicationsProvider({
       const errorMessage =
         err instanceof Error ? err.message : "Failed to fetch application";
       setError(errorMessage);
+      showErrorToast(errorMessage);
       console.error("Get application by ID error:", err);
     } finally {
       setIsLoading(false);
+      stopProgress();
     }
   };
 
@@ -271,6 +283,7 @@ export function ApplicationsProvider({
     try {
       setIsLoading(true);
       setError(null);
+      startProgress();
 
       const response = await apiCall<Application>(
         `/applications/screening-approve/${id}`,
@@ -282,21 +295,26 @@ export function ApplicationsProvider({
 
       // Refresh applications list
       await getAllApplications();
+      const successMessage =
+        response.message || "Application approved by screening";
+      showSuccessToast(successMessage);
 
       return {
         success: true,
-        message: response.message || "Application approved by screening",
+        message: successMessage,
       };
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to approve application";
       setError(errorMessage);
+      showErrorToast(errorMessage);
       return {
         success: false,
         message: errorMessage,
       };
     } finally {
       setIsLoading(false);
+      stopProgress();
     }
   };
 
@@ -307,6 +325,7 @@ export function ApplicationsProvider({
     try {
       setIsLoading(true);
       setError(null);
+      startProgress();
 
       const response = await apiCall<Application>(
         `/applications/screening-reject/${decision.application_id}`,
@@ -319,21 +338,26 @@ export function ApplicationsProvider({
 
       // Refresh applications list
       await getAllApplications();
+      const successMessage =
+        response.message || "Application rejected by screening";
+      showSuccessToast(successMessage);
 
       return {
         success: true,
-        message: response.message || "Application rejected by screening",
+        message: successMessage,
       };
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to reject application";
       setError(errorMessage);
+      showErrorToast(errorMessage);
       return {
         success: false,
         message: errorMessage,
       };
     } finally {
       setIsLoading(false);
+      stopProgress();
     }
   };
 
