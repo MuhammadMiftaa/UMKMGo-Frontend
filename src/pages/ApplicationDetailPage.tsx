@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -11,16 +11,7 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
 import { useAuth } from "../contexts/AuthContext";
-import {
-  ArrowLeft,
-  FileText,
-  User,
-  Calendar,
-  MapPin,
-  CheckCircle,
-  XCircle,
-  Award,
-} from "lucide-react";
+import { ArrowLeft, FileText, User, Calendar, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   HistoryAction,
@@ -35,8 +26,15 @@ import {
   ApplicationDecision,
   useApplications,
 } from "../contexts/ApplicationContext";
+import {
+  showConfirmAlert,
+  showSuccessToast,
+  showErrorToast,
+  showWarningToast,
+} from "../lib/toast";
 
 export function ApplicationDetailPage() {
+  const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
   const {
@@ -47,11 +45,13 @@ export function ApplicationDetailPage() {
     screeningRevise,
     finalApprove,
     finalReject,
+    isLoading,
   } = useApplications();
   const [rejectionReason, setRejectionReason] = useState("");
   const [revisionReason, setRevisionReason] = useState("");
   const [showRejectionInput, setShowRejectionInput] = useState(false);
   const [showRevisionInput, setShowRevisionInput] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -59,8 +59,21 @@ export function ApplicationDetailPage() {
     }
   }, [id]);
 
-  if (!application) {
+  if (!application && !isLoading) {
     return <Navigate to="/" replace />;
+  }
+
+  if (isLoading || !application) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">
+            Loading application details...
+          </p>
+        </div>
+      </div>
+    );
   }
 
   const formatCurrency = (amount: number) => {
@@ -71,89 +84,175 @@ export function ApplicationDetailPage() {
     }).format(amount);
   };
 
-  const handleScreeningApprove = async () => {
-    const result = await screeningApprove(application.id);
+  const handleScreeningApprove = () => {
+    showConfirmAlert({
+      message:
+        "Apakah Anda yakin ingin menyetujui pengajuan ini pada tahap screening?",
+      confirmText: "Ya, Setujui",
+      cancelText: "Batal",
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          const result = await screeningApprove(application.id);
 
-    if (result.success) {
-      alert("Pengajuan berhasil disetujui!");
-      window.location.reload();
-    } else {
-      alert(result.message);
-    }
+          if (result.success) {
+            showSuccessToast(
+              "Pengajuan berhasil disetujui pada tahap screening!"
+            );
+            navigate(-1);
+          } else {
+            showErrorToast(result.message || "Gagal menyetujui pengajuan");
+          }
+        } catch (error) {
+          showErrorToast("Terjadi kesalahan saat menyetujui pengajuan");
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
   };
 
-  const handleScreeningReject = async () => {
-    if (!rejectionReason) {
-      alert("Alasan penolakan tidak boleh kosong.");
+  const handleScreeningReject = () => {
+    if (!rejectionReason.trim()) {
+      showWarningToast("Alasan penolakan tidak boleh kosong");
       return;
     }
 
-    const payload: ApplicationDecision = {
-      action: "reject",
-      notes: rejectionReason,
-      application_id: application.id,
-    };
+    showConfirmAlert({
+      message: "Apakah Anda yakin ingin menolak pengajuan ini?",
+      confirmText: "Ya, Tolak",
+      cancelText: "Batal",
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          const payload: ApplicationDecision = {
+            action: "reject",
+            notes: rejectionReason,
+            application_id: application.id,
+          };
 
-    const result = await screeningReject(payload);
-    if (result.success) {
-      alert("Pengajuan berhasil ditolak!");
-      window.location.reload();
-    } else {
-      alert(result.message);
-    }
+          const result = await screeningReject(payload);
+
+          if (result.success) {
+            showSuccessToast("Pengajuan berhasil ditolak");
+            setRejectionReason("");
+            setShowRejectionInput(false);
+            navigate(-1);
+          } else {
+            showErrorToast(result.message || "Gagal menolak pengajuan");
+          }
+        } catch (error) {
+          showErrorToast("Terjadi kesalahan saat menolak pengajuan");
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
   };
 
-  const handleScreeningRevise = async () => {
-    if (!revisionReason) {
-      alert("Instruksi perbaikan tidak boleh kosong.");
+  const handleScreeningRevise = () => {
+    if (!revisionReason.trim()) {
+      showWarningToast("Instruksi perbaikan tidak boleh kosong");
       return;
     }
 
-    const payload: ApplicationDecision = {
-      action: "revise",
-      notes: revisionReason,
-      application_id: application.id,
-    };
+    showConfirmAlert({
+      message: "Kirim instruksi perbaikan ke pemohon?",
+      confirmText: "Ya, Kirim",
+      cancelText: "Batal",
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          const payload: ApplicationDecision = {
+            action: "revise",
+            notes: revisionReason,
+            application_id: application.id,
+          };
 
-    const result = await screeningRevise(payload);
-    if (result.success) {
-      alert("Instruksi perbaikan berhasil dikirim!");
-      window.location.reload();
-    } else {
-      alert(result.message);
-    }
+          const result = await screeningRevise(payload);
+
+          if (result.success) {
+            showSuccessToast("Instruksi perbaikan berhasil dikirim");
+            setRevisionReason("");
+            setShowRevisionInput(false);
+            navigate(-1);
+          } else {
+            showErrorToast(
+              result.message || "Gagal mengirim instruksi perbaikan"
+            );
+          }
+        } catch (error) {
+          showErrorToast("Terjadi kesalahan saat mengirim instruksi");
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
   };
 
-  const handleFinalApprove = async () => {
-    const result = await finalApprove(application.id);
+  const handleFinalApprove = () => {
+    showConfirmAlert({
+      message: "Apakah Anda yakin ingin menyetujui pengajuan ini secara final?",
+      confirmText: "Ya, Setujui Final",
+      cancelText: "Batal",
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          const result = await finalApprove(application.id);
 
-    if (result.success) {
-      alert("Pengajuan berhasil disetujui secara final!");
-      window.location.reload();
-    } else {
-      alert(result.message);
-    }
+          if (result.success) {
+            showSuccessToast("Pengajuan berhasil disetujui secara final!");
+            navigate(-1);
+          } else {
+            showErrorToast(
+              result.message || "Gagal menyetujui pengajuan final"
+            );
+          }
+        } catch (error) { 
+          showErrorToast("Terjadi kesalahan saat menyetujui pengajuan final");
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
   };
 
-  const handleFinalReject = async () => {
-    if (!rejectionReason) {
-      alert("Alasan penolakan tidak boleh kosong.");
+  const handleFinalReject = () => {
+    if (!rejectionReason.trim()) {
+      showWarningToast("Alasan penolakan tidak boleh kosong");
       return;
     }
 
-    const payload: ApplicationDecision = {
-      action: "reject",
-      notes: rejectionReason,
-      application_id: application.id,
-    };
+    showConfirmAlert({
+      message: "Apakah Anda yakin ingin menolak pengajuan ini secara final?",
+      confirmText: "Ya, Tolak Final",
+      cancelText: "Batal",
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          const payload: ApplicationDecision = {
+            action: "reject",
+            notes: rejectionReason,
+            application_id: application.id,
+          };
 
-    const result = await finalReject(payload);
-    if (result.success) {
-      alert("Pengajuan berhasil ditolak secara final!");
-      window.location.reload();
-    } else {
-      alert(result.message);
-    }
+          const result = await finalReject(payload);
+
+          if (result.success) {
+            showSuccessToast("Pengajuan berhasil ditolak secara final");
+            setRejectionReason("");
+            setShowRejectionInput(false);
+            navigate(-1);
+          } else {
+            showErrorToast(result.message || "Gagal menolak pengajuan final");
+          }
+        } catch (error) {
+          showErrorToast("Terjadi kesalahan saat menolak pengajuan final");
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
   };
 
   return (
@@ -167,11 +266,7 @@ export function ApplicationDetailPage() {
             <p className="text-muted-foreground">ID: {application.id}</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.history.back()}
-        >
+        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Kembali
         </Button>
@@ -297,7 +392,7 @@ export function ApplicationDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {(application?.histories?.length ?? 0) &&
+                {(application?.histories?.length ?? 0) > 0 &&
                   (application.histories ?? []).map((history, idx) => (
                     <div
                       key={idx}
@@ -390,7 +485,6 @@ export function ApplicationDetailPage() {
           </Card>
 
           {/* Actions */}
-
           <Card>
             <CardHeader>
               <CardTitle>Tindakan</CardTitle>
@@ -414,13 +508,15 @@ export function ApplicationDetailPage() {
                       className="w-full"
                       variant="default"
                       onClick={handleScreeningApprove}
+                      disabled={actionLoading}
                     >
-                      Lolos Screening
+                      {actionLoading ? "Processing..." : "Lolos Screening"}
                     </Button>
                     <Button
                       className="w-full bg-transparent"
                       variant="outline"
                       onClick={() => setShowRevisionInput(!showRevisionInput)}
+                      disabled={actionLoading}
                     >
                       Minta Perbaikan
                     </Button>
@@ -430,13 +526,17 @@ export function ApplicationDetailPage() {
                           placeholder="Masukkan instruksi perbaikan..."
                           value={revisionReason}
                           onChange={(e) => setRevisionReason(e.target.value)}
+                          disabled={actionLoading}
                         />
                         <Button
                           className="w-full"
                           size="sm"
                           onClick={handleScreeningRevise}
+                          disabled={actionLoading}
                         >
-                          Kirim Instruksi Perbaikan
+                          {actionLoading
+                            ? "Sending..."
+                            : "Kirim Instruksi Perbaikan"}
                         </Button>
                       </div>
                     )}
@@ -444,6 +544,7 @@ export function ApplicationDetailPage() {
                       className="w-full"
                       variant="destructive"
                       onClick={() => setShowRejectionInput(!showRejectionInput)}
+                      disabled={actionLoading}
                     >
                       Tolak Administratif
                     </Button>
@@ -453,14 +554,18 @@ export function ApplicationDetailPage() {
                           placeholder="Masukkan alasan penolakan..."
                           value={rejectionReason}
                           onChange={(e) => setRejectionReason(e.target.value)}
+                          disabled={actionLoading}
                         />
                         <Button
                           className="w-full"
                           variant="destructive"
                           size="sm"
                           onClick={handleScreeningReject}
+                          disabled={actionLoading}
                         >
-                          Konfirmasi Penolakan
+                          {actionLoading
+                            ? "Processing..."
+                            : "Konfirmasi Penolakan"}
                         </Button>
                       </div>
                     )}
@@ -483,13 +588,15 @@ export function ApplicationDetailPage() {
                       className="w-full"
                       variant="default"
                       onClick={handleFinalApprove}
+                      disabled={actionLoading}
                     >
-                      Setujui Final
+                      {actionLoading ? "Processing..." : "Setujui Final"}
                     </Button>
                     <Button
                       className="w-full"
                       variant="destructive"
                       onClick={() => setShowRejectionInput(!showRejectionInput)}
+                      disabled={actionLoading}
                     >
                       Tolak Final
                     </Button>
@@ -499,14 +606,18 @@ export function ApplicationDetailPage() {
                           placeholder="Masukkan alasan penolakan final..."
                           value={rejectionReason}
                           onChange={(e) => setRejectionReason(e.target.value)}
+                          disabled={actionLoading}
                         />
                         <Button
                           className="w-full"
                           variant="destructive"
                           size="sm"
                           onClick={handleFinalReject}
+                          disabled={actionLoading}
                         >
-                          Konfirmasi Tolak Final
+                          {actionLoading
+                            ? "Processing..."
+                            : "Konfirmasi Tolak Final"}
                         </Button>
                       </div>
                     )}

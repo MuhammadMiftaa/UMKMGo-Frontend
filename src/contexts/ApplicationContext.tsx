@@ -4,11 +4,6 @@ import type React from "react";
 import { createContext, useContext, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { API_BASE_URL } from "../lib/const";
-import {
-  showSuccessToast,
-  showErrorToast,
-  showConfirmToast,
-} from "../lib/toast";
 import { startProgress, stopProgress } from "../lib/nprogress";
 
 // ============================================
@@ -240,7 +235,6 @@ export function ApplicationsProvider({
       const errorMessage =
         err instanceof Error ? err.message : "Failed to fetch applications";
       setError(errorMessage);
-      showErrorToast(errorMessage);
       console.error("Get all applications error:", err);
     } finally {
       setIsLoading(false);
@@ -268,7 +262,6 @@ export function ApplicationsProvider({
       const errorMessage =
         err instanceof Error ? err.message : "Failed to fetch application";
       setError(errorMessage);
-      showErrorToast(errorMessage);
       console.error("Get application by ID error:", err);
     } finally {
       setIsLoading(false);
@@ -297,7 +290,6 @@ export function ApplicationsProvider({
       await getAllApplications();
       const successMessage =
         response.message || "Application approved by screening";
-      showSuccessToast(successMessage);
 
       return {
         success: true,
@@ -307,7 +299,6 @@ export function ApplicationsProvider({
       const errorMessage =
         err instanceof Error ? err.message : "Failed to approve application";
       setError(errorMessage);
-      showErrorToast(errorMessage);
       return {
         success: false,
         message: errorMessage,
@@ -340,7 +331,6 @@ export function ApplicationsProvider({
       await getAllApplications();
       const successMessage =
         response.message || "Application rejected by screening";
-      showSuccessToast(successMessage);
 
       return {
         success: true,
@@ -350,7 +340,6 @@ export function ApplicationsProvider({
       const errorMessage =
         err instanceof Error ? err.message : "Failed to reject application";
       setError(errorMessage);
-      showErrorToast(errorMessage);
       return {
         success: false,
         message: errorMessage,

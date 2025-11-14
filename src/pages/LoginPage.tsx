@@ -81,7 +81,7 @@ export function LoginPage() {
               />
             </div>
             {error && <div className="text-sm text-destructive">{error}</div>}
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full mt-4" disabled={isLoading}>
               {isLoading ? "Masuk..." : "Masuk"}
             </Button>
           </form>

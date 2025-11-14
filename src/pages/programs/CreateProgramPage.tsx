@@ -31,20 +31,25 @@ import {
 } from "../../contexts/ProgramContext";
 import { Programs, TrainingTypes } from "../../lib/const";
 import { fileToBase64, isImageFile, validateImageSize } from "../../lib/utils";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showWarningToast,
+} from "../../lib/toast";
 
 export default function CreateProgramPage() {
   const { id } = useParams();
   const isEditMode = !!id; // Check if we're in edit mode
 
-  const { 
-    createProgram, 
-    getProgramById, 
-    currentProgram, 
+  const {
+    createProgram,
+    getProgramById,
+    currentProgram,
     updateProgram,
     clearCurrentProgram,
-    isLoading 
+    isLoading,
   } = usePrograms();
-  
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const programType =
@@ -82,7 +87,7 @@ export default function CreateProgramPage() {
     if (isEditMode && id) {
       getProgramById(Number(id));
     }
-    
+
     // Cleanup when unmounting
     return () => {
       if (isEditMode) {
@@ -101,7 +106,9 @@ export default function CreateProgramPage() {
         provider: currentProgram.provider || "",
         provider_logo: currentProgram.provider_logo || "",
         type: currentProgram.type || programType,
-        training_type: currentProgram.training_type || TrainingTypes.OFFLINE as TrainingType,
+        training_type:
+          currentProgram.training_type ||
+          (TrainingTypes.OFFLINE as TrainingType),
         batch: currentProgram.batch || 0,
         batch_start_date: currentProgram.batch_start_date || "",
         batch_end_date: currentProgram.batch_end_date || "",
@@ -137,13 +144,13 @@ export default function CreateProgramPage() {
     try {
       // Validate file type
       if (!isImageFile(file)) {
-        alert("Please upload an image file");
+        showWarningToast("Mohon upload file gambar (JPG, PNG, dll)");
         return;
       }
 
       // Validate file size (max 5MB)
       if (!validateImageSize(file, 5)) {
-        alert("File size must be less than 5MB");
+        showWarningToast("Ukuran file maksimal 5MB");
         return;
       }
 
@@ -161,9 +168,11 @@ export default function CreateProgramPage() {
       } else {
         setLogoPreview(base64String);
       }
+
+      showSuccessToast("File berhasil diupload!");
     } catch (error) {
       console.error("Error uploading file:", error);
-      alert("Failed to upload file. Please try again.");
+      showErrorToast("Gagal mengupload file. Silakan coba lagi.");
     } finally {
       setIsUploading(false);
     }
@@ -218,35 +227,56 @@ export default function CreateProgramPage() {
     setError("");
 
     // Validation
-    if (!formData.title || !formData.description || !formData.application_deadline) {
-      setError("Please fill in all required fields");
+    if (
+      !formData.title ||
+      !formData.description ||
+      !formData.application_deadline
+    ) {
+      showWarningToast("Mohon lengkapi semua field yang wajib diisi");
       return;
     }
 
     if (!formData.banner || !formData.provider_logo) {
-      setError("Please upload both banner and provider logo");
+      showWarningToast("Mohon upload banner dan logo provider");
       return;
     }
 
     let result;
+    setIsUploading(true);
 
-    if (isEditMode && id) {
-      // Update existing program
-      result = await updateProgram(Number(id), formData);
-    } else {
-      // Create new program
-      result = await createProgram(formData);
-    }
+    try {
+      if (isEditMode && id) {
+        // Update existing program
+        result = await updateProgram(Number(id), formData);
+      } else {
+        // Create new program
+        result = await createProgram(formData);
+      }
 
-    if (result.success) {
-      alert(
-        isEditMode 
-          ? "Program updated successfully!" 
-          : "Program created successfully!"
+      if (result.success) {
+        showSuccessToast(
+          isEditMode
+            ? "Program berhasil diperbarui!"
+            : "Program berhasil dibuat!"
+        );
+        navigate(`/programs/${formData.type}`);
+      } else {
+        showErrorToast(
+          result.message ||
+            `Gagal ${isEditMode ? "memperbarui" : "membuat"} program`
+        );
+        setError(
+          result.message ||
+            `Failed to ${isEditMode ? "update" : "create"} program`
+        );
+      }
+    } catch (error) {
+      showErrorToast(
+        `Terjadi kesalahan saat ${isEditMode ? "memperbarui" : "membuat"} program`
       );
-      navigate(`/programs/${formData.type}`);
-    } else {
-      setError(result.message || `Failed to ${isEditMode ? 'update' : 'create'} program`);
+      setError("An unexpected error occurred");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -267,8 +297,12 @@ export default function CreateProgramPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
-          <h2 className="text-2xl font-bold text-destructive">Program Not Found</h2>
-          <p className="text-muted-foreground">The program you're trying to edit doesn't exist.</p>
+          <h2 className="text-2xl font-bold text-destructive">
+            Program Not Found
+          </h2>
+          <p className="text-muted-foreground">
+            The program you're trying to edit doesn't exist.
+          </p>
           <Button onClick={() => navigate("/programs")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Programs
@@ -283,13 +317,12 @@ export default function CreateProgramPage() {
       <div className="flex items-center w-full justify-between">
         <div>
           <h1 className="text-3xl font-bold capitalize">
-            {isEditMode ? 'Edit' : 'Create'} {formData.type} Program
+            {isEditMode ? "Edit" : "Create"} {formData.type} Program
           </h1>
           <p className="text-muted-foreground">
-            {isEditMode 
+            {isEditMode
               ? `Update ${formData.type} program details`
-              : `Add a new ${formData.type} program`
-            }
+              : `Add a new ${formData.type} program`}
           </p>
         </div>
         <Button
@@ -638,7 +671,9 @@ export default function CreateProgramPage() {
                           className="cursor-pointer"
                         >
                           <span className="text-sm text-muted-foreground">
-                            {isUploading ? "Uploading..." : "Click to upload banner"}
+                            {isUploading
+                              ? "Uploading..."
+                              : "Click to upload banner"}
                           </span>
                           <Input
                             id="banner-upload"
@@ -687,7 +722,9 @@ export default function CreateProgramPage() {
                       <div className="mt-2">
                         <Label htmlFor="logo-upload" className="cursor-pointer">
                           <span className="text-sm text-muted-foreground">
-                            {isUploading ? "Uploading..." : "Click to upload logo"}
+                            {isUploading
+                              ? "Uploading..."
+                              : "Click to upload logo"}
                           </span>
                           <Input
                             id="logo-upload"
@@ -808,14 +845,14 @@ export default function CreateProgramPage() {
           >
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            disabled={isLoading || isUploading}
-          >
-            {isLoading 
-              ? (isEditMode ? "Updating..." : "Creating...") 
-              : (isEditMode ? "Update Program" : "Create Program")
-            }
+          <Button type="submit" disabled={isLoading || isUploading}>
+            {isLoading
+              ? isEditMode
+                ? "Updating..."
+                : "Creating..."
+              : isEditMode
+                ? "Update Program"
+                : "Create Program"}
           </Button>
         </div>
       </form>

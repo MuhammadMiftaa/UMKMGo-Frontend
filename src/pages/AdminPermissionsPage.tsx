@@ -13,7 +13,7 @@ import { Checkbox } from "../components/ui/checkbox";
 import { ArrowLeft, Shield, Save } from "lucide-react";
 import { Link } from "react-router-dom";
 import { UpdateRolePermissionsData, useUsersManagement } from "../contexts/UserContext";
-import { RoleConstants } from "../lib/const";
+import { showSuccessToast, showErrorToast, showWarningToast, showConfirmAlert } from "../lib/toast";
 
 export function AdminPermissionsPage() {
   const {
@@ -22,13 +22,12 @@ export function AdminPermissionsPage() {
     getListRolePermissions,
     rolePermissions,
     updateRolePermissions,
+    isLoading,
   } = useUsersManagement();
 
   const [selectedRole, setSelectedRole] = useState<number>(0);
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(
-    rolePermissions.find((role) => role.role_id === selectedRole)
-      ?.permissions ?? []
-  );
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [saveLoading, setSaveLoading] = useState(false);
 
   useEffect(() => {
     getListPermissions();
@@ -53,25 +52,53 @@ export function AdminPermissionsPage() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!selectedRole) {
-      alert("Please select a role first");
+      showWarningToast("Silakan pilih role terlebih dahulu");
       return;
     }
 
-    const data: UpdateRolePermissionsData = {
-      role_id: selectedRole,
-      permissions: selectedPermissions,
-    };
+    showConfirmAlert({
+      title: 'Konfirmasi Perubahan',
+      message: "Apakah Anda yakin ingin menyimpan perubahan hak akses untuk role ini?",
+      confirmText: "Ya, Simpan",
+      cancelText: "Batal",
+      type: 'question',
+      onConfirm: async () => {
+        setSaveLoading(true);
+        try {
+          const data: UpdateRolePermissionsData = {
+            role_id: selectedRole,
+            permissions: selectedPermissions,
+          };
 
-    const result = await updateRolePermissions(data);
+          const result = await updateRolePermissions(data);
 
-    if (result.success) {
-      alert("Role permissions updated successfully!");
-    } else {
-      alert(result.message);
-    }
+          if (result.success) {
+            showSuccessToast("Hak akses berhasil diperbarui!");
+            await getListRolePermissions(); // Refresh data
+          } else {
+            showErrorToast(result.message || "Gagal memperbarui hak akses");
+          }
+        } catch (error) {
+          showErrorToast("Terjadi kesalahan saat memperbarui hak akses");
+        } finally {
+          setSaveLoading(false);
+        }
+      },
+    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">Loading permissions...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -119,8 +146,7 @@ export function AdminPermissionsPage() {
                     .join(" ")}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                  Iusto, aut.
+                  {role.permissions.length} permissions
                 </div>
               </div>
             ))}
@@ -132,57 +158,81 @@ export function AdminPermissionsPage() {
           <CardHeader>
             <CardTitle>
               Hak Akses untuk{" "}
-              {rolePermissions
-                .find((role) => role.role_id === selectedRole)
-                ?.role_name.split("_")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(" ") || "Role"}
+              {selectedRole
+                ? rolePermissions
+                    .find((role) => role.role_id === selectedRole)
+                    ?.role_name.split("_")
+                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(" ")
+                : "Role"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {permissions.map((permission) => (
-              <div
-                key={permission.code}
-                className="flex items-start space-x-3 p-3 border rounded-lg"
-              >
-                <Checkbox
-                  id={permission.code}
-                  checked={selectedPermissions.includes(permission.code)}
-                  onCheckedChange={(checked) =>
-                    handlePermissionChange(permission.code, checked as boolean)
-                  }
-                />
-                <div className="flex-1">
-                  <label
-                    htmlFor={permission.code}
-                    className="text-sm font-medium cursor-pointer"
-                  >
-                    {permission.name}
-                  </label>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {permission.description}
-                  </p>
-                </div>
-                <Badge
-                  variant={
-                    selectedPermissions.includes(permission.code)
-                      ? "success"
-                      : "secondary"
-                  }
-                >
-                  {selectedPermissions.includes(permission.code)
-                    ? "Aktif"
-                    : "Tidak Aktif"}
-                </Badge>
+            {!selectedRole ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Pilih role untuk melihat dan mengelola hak akses
               </div>
-            ))}
+            ) : (
+              <>
+                {permissions.map((permission) => (
+                  <div
+                    key={permission.code}
+                    className="flex items-start space-x-3 p-3 border rounded-lg"
+                  >
+                    <Checkbox
+                      id={permission.code}
+                      checked={selectedPermissions.includes(permission.code)}
+                      onCheckedChange={(checked) =>
+                        handlePermissionChange(permission.code, checked as boolean)
+                      }
+                      disabled={saveLoading}
+                    />
+                    <div className="flex-1">
+                      <label
+                        htmlFor={permission.code}
+                        className="text-sm font-medium cursor-pointer"
+                      >
+                        {permission.name}
+                      </label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {permission.description}
+                      </p>
+                    </div>
+                    <Badge
+                      variant={
+                        selectedPermissions.includes(permission.code)
+                          ? "success"
+                          : "secondary"
+                      }
+                    >
+                      {selectedPermissions.includes(permission.code)
+                        ? "Aktif"
+                        : "Tidak Aktif"}
+                    </Badge>
+                  </div>
+                ))}
 
-            <div className="pt-4 border-t">
-              <Button onClick={handleSave} className="w-full">
-                <Save className="h-4 w-4 mr-2" />
-                Simpan Hak Akses
-              </Button>
-            </div>
+                <div className="pt-4 border-t">
+                  <Button 
+                    onClick={handleSave} 
+                    className="w-full"
+                    disabled={saveLoading || !selectedRole}
+                  >
+                    {saveLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Simpan Hak Akses
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

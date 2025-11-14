@@ -13,13 +13,16 @@ import { Input } from "../components/ui/input";
 import { ArrowLeft, Search, Edit, Trash2, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUsersManagement } from "../contexts/UserContext";
+import { showConfirmAlert, showSuccessToast, showErrorToast } from "../lib/toast";
+import { CardListSkeleton } from "../components/skeleton/CardSkeleton";
 
 export function AdminListPage() {
   const Navigate = useNavigate();
-  const { getAllUsers, users, deleteUser } = useUsersManagement();
+  const { getAllUsers, users, deleteUser, isLoading } = useUsersManagement();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [deleteLoading, setDeleteLoading] = useState<number | null>(null);
 
   const filteredAdmins = users.filter((admin) => {
     const matchesSearch =
@@ -35,16 +38,34 @@ export function AdminListPage() {
     getAllUsers();
   }, []);
 
-  const handleDelete = async (adminId: number) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus admin ini?")) {
-      await deleteUser(adminId);
-      getAllUsers(); // Refresh the list after deletion
-    }
+  const handleDelete = async (adminId: number, adminName: string) => {
+    showConfirmAlert({
+      message: `Apakah Anda yakin ingin menghapus admin "${adminName}"? Tindakan ini tidak dapat dibatalkan.`,
+      confirmText: "Ya, Hapus",
+      cancelText: "Batal",
+      onConfirm: async () => {
+        setDeleteLoading(adminId);
+        try {
+          const result = await deleteUser(adminId);
+          
+          if (result.success) {
+            showSuccessToast("Admin berhasil dihapus");
+            await getAllUsers(); // Refresh the list
+          } else {
+            showErrorToast(result.message || "Gagal menghapus admin");
+          }
+        } catch (error) {
+          showErrorToast("Terjadi kesalahan saat menghapus admin");
+        } finally {
+          setDeleteLoading(null);
+        }
+      },
+    });
   };
 
   const handleEdit = (adminId: number) => {
     Navigate(`/admin/edit/${adminId}`);
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -95,69 +116,89 @@ export function AdminListPage() {
       </Card>
 
       {/* Admin List */}
-      <div className="space-y-4">
-        {filteredAdmins.map((admin) => (
-          <Card key={admin.id}>
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{admin.name}</h3>
-                    <Badge variant="outline">{admin.email}</Badge>
+      {isLoading ? (
+        <CardListSkeleton count={5} />
+      ) : (
+        <div className="space-y-4">
+          {filteredAdmins.map((admin) => (
+            <Card key={admin.id}>
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">{admin.name}</h3>
+                      <Badge variant="outline">{admin.email}</Badge>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span>
+                        <strong>Role:</strong>{" "}
+                        {admin.role_name
+                          .split("_")
+                          .map(
+                            (word) =>
+                              word.charAt(0).toUpperCase() + word.slice(1)
+                          )
+                          .join(" ")}
+                      </span>
+                      <span>
+                        <strong>Status:</strong>
+                        <Badge
+                          variant={admin.is_active ? "success" : "secondary"}
+                          className="ml-1"
+                        >
+                          {admin.is_active ? "Aktif" : "Tidak Aktif"}
+                        </Badge>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>
+                        Login terakhir:{" "}
+                        {new Date(admin.last_login_at).toLocaleString("id-ID")}
+                      </span>
+                      <span>
+                        Dibuat:{" "}
+                        {new Date(admin.created_at).toLocaleDateString("id-ID")}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span>
-                      <strong>Role:</strong>{" "}
-                      {admin.role_name
-                        .split("_")
-                        .map(
-                          (word) => word.charAt(0).toUpperCase() + word.slice(1)
-                        )
-                        .join(" ")}
-                    </span>
-                    <span>
-                      <strong>Status:</strong>
-                      <Badge
-                        variant={admin.is_active ? "success" : "secondary"}
-                        className="ml-1"
-                      >
-                        {admin.is_active ? "Aktif" : "Tidak Aktif"}
-                      </Badge>
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>
-                      Login terakhir:{" "}
-                      {new Date(admin.last_login_at).toLocaleString("id-ID")}
-                    </span>
-                    <span>
-                      Dibuat:{" "}
-                      {new Date(admin.created_at).toLocaleDateString("id-ID")}
-                    </span>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(admin.id)}
+                      disabled={deleteLoading === admin.id}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(admin.id, admin.name)}
+                      disabled={deleteLoading === admin.id}
+                    >
+                      {deleteLoading === admin.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Hapus
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(admin.id)}>
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(admin.id)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Hapus
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredAdmins.length === 0 && (
+      {!isLoading && filteredAdmins.length === 0 && (
         <Card>
           <CardContent className="p-6 text-center">
             <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

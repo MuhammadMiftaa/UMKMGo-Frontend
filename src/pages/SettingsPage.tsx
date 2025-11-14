@@ -12,8 +12,14 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useAuth } from "../contexts/AuthContext";
 import { useSettings } from "../contexts/SettingsContext";
-import { Settings, Users, FileText } from "lucide-react";
+import { Settings, Users, FileText, FileSpreadsheet } from "lucide-react";
 import { Link } from "react-router-dom";
+import { 
+  showSuccessToast, 
+  showErrorToast, 
+  showWarningToast,
+  showConfirmAlert 
+} from "../lib/toast";
 
 export function SettingsPage() {
   const { user } = useAuth();
@@ -44,9 +50,17 @@ export function SettingsPage() {
   const [applicationsType, setApplicationsType] = useState<
     "all" | "training" | "certification" | "funding"
   >("all");
+  const [applicationsFileType, setApplicationsFileType] = useState<"pdf" | "excel">("pdf");
+  
   const [programsType, setProgramsType] = useState<
     "all" | "training" | "certification" | "funding"
   >("all");
+  const [programsFileType, setProgramsFileType] = useState<"pdf" | "excel">("pdf");
+
+  // Loading states
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [slaLoading, setSlaLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
 
   // Load SLA data on mount
   useEffect(() => {
@@ -79,88 +93,171 @@ export function SettingsPage() {
 
   // Handle profile update
   const handleUpdateProfile = async () => {
-    const result = await updateProfile(profileForm);
-
-    if (result.success) {
-      alert("Profile updated successfully!");
-    } else {
-      alert(result.message || "Failed to update profile");
+    if (!profileForm.name.trim() || !profileForm.email.trim()) {
+      showWarningToast("Nama dan email tidak boleh kosong");
+      return;
     }
+
+    showConfirmAlert({
+      title: 'Konfirmasi Update Profil',
+      message: "Apakah Anda yakin ingin memperbarui profil Anda?",
+      confirmText: "Ya, Update",
+      cancelText: "Batal",
+      type: 'question',
+      onConfirm: async () => {
+        setProfileLoading(true);
+        try {
+          const result = await updateProfile(profileForm);
+
+          if (result.success) {
+            showSuccessToast("Profil berhasil diperbarui!");
+          } else {
+            showErrorToast(result.message || "Gagal memperbarui profil");
+          }
+        } catch (error) {
+          showErrorToast("Terjadi kesalahan saat memperbarui profil");
+        } finally {
+          setProfileLoading(false);
+        }
+      },
+    });
   };
 
   // Handle screening SLA update
   const handleUpdateScreeningSLA = async () => {
-    const result = await updateScreeningSLA({
-      max_days: screeningSLADays,
-      description: "Screening SLA",
-    });
-
-    if (result.success) {
-      alert("Screening SLA updated successfully!");
-    } else {
-      alert(result.message || "Failed to update screening SLA");
+    if (screeningSLADays <= 0) {
+      showWarningToast("Jumlah hari harus lebih dari 0");
+      return;
     }
+
+    showConfirmAlert({
+      title: 'Konfirmasi Update SLA',
+      message: `Apakah Anda yakin ingin mengubah SLA Screening menjadi ${screeningSLADays} hari?`,
+      confirmText: "Ya, Update",
+      cancelText: "Batal",
+      type: 'question',
+      onConfirm: async () => {
+        setSlaLoading(true);
+        try {
+          const result = await updateScreeningSLA({
+            max_days: screeningSLADays,
+            description: "Screening SLA",
+          });
+
+          if (result.success) {
+            showSuccessToast("SLA Screening berhasil diperbarui!");
+          } else {
+            showErrorToast(result.message || "Gagal memperbarui SLA Screening");
+          }
+        } catch (error) {
+          showErrorToast("Terjadi kesalahan saat memperbarui SLA Screening");
+        } finally {
+          setSlaLoading(false);
+        }
+      },
+    });
   };
 
   // Handle final SLA update
   const handleUpdateFinalSLA = async () => {
-    const result = await updateFinalSLA({
-      max_days: finalSLADays,
-      description: "Final SLA",
-    });
-
-    if (result.success) {
-      alert("Final SLA updated successfully!");
-    } else {
-      alert(result.message || "Failed to update final SLA");
+    if (finalSLADays <= 0) {
+      showWarningToast("Jumlah hari harus lebih dari 0");
+      return;
     }
+
+    showConfirmAlert({
+      title: 'Konfirmasi Update SLA',
+      message: `Apakah Anda yakin ingin mengubah SLA Final menjadi ${finalSLADays} hari?`,
+      confirmText: "Ya, Update",
+      cancelText: "Batal",
+      type: 'question',
+      onConfirm: async () => {
+        setSlaLoading(true);
+        try {
+          const result = await updateFinalSLA({
+            max_days: finalSLADays,
+            description: "Final SLA",
+          });
+
+          if (result.success) {
+            showSuccessToast("SLA Final berhasil diperbarui!");
+          } else {
+            showErrorToast(result.message || "Gagal memperbarui SLA Final");
+          }
+        } catch (error) {
+          showErrorToast("Terjadi kesalahan saat memperbarui SLA Final");
+        } finally {
+          setSlaLoading(false);
+        }
+      },
+    });
   };
 
   // Handle export applications
   const handleExportApplications = async () => {
-    const result = await exportApplications({
-      file_type: "pdf",
-      application_type: applicationsType,
-    });
+    setExportLoading(true);
+    try {
+      const result = await exportApplications({
+        file_type: applicationsFileType,
+        application_type: applicationsType,
+      });
 
-    if (result.success && result.data) {
-      // Create download link
-      const url = window.URL.createObjectURL(result.data);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `applications-${applicationsType}-${new Date().toISOString()}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      if (result.success && result.data) {
+        // Determine file extension
+        const fileExt = applicationsFileType === "pdf" ? "pdf" : "xlsx";
+        
+        // Create download link
+        const url = window.URL.createObjectURL(result.data);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `applications-${applicationsType}-${new Date().toISOString()}.${fileExt}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
 
-      alert("Applications exported successfully!");
-    } else {
-      alert(result.message || "Failed to export applications");
+        showSuccessToast(`Laporan pengajuan berhasil diunduh (${applicationsFileType.toUpperCase()})!`);
+      } else {
+        showErrorToast(result.message || "Gagal mengekspor laporan pengajuan");
+      }
+    } catch (error) {
+      showErrorToast("Terjadi kesalahan saat mengekspor laporan");
+    } finally {
+      setExportLoading(false);
     }
   };
 
   // Handle export programs
   const handleExportPrograms = async () => {
-    const result = await exportPrograms({
-      file_type: "pdf",
-      application_type: programsType,
-    });
+    setExportLoading(true);
+    try {
+      const result = await exportPrograms({
+        file_type: programsFileType,
+        application_type: programsType,
+      });
 
-    if (result.success && result.data) {
-      // Create download link
-      const url = window.URL.createObjectURL(result.data);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `programs-${programsType}-${new Date().toISOString()}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      if (result.success && result.data) {
+        // Determine file extension
+        const fileExt = programsFileType === "pdf" ? "pdf" : "xlsx";
+        
+        // Create download link
+        const url = window.URL.createObjectURL(result.data);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `programs-${programsType}-${new Date().toISOString()}.${fileExt}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
 
-      alert("Programs exported successfully!");
-    } else {
-      alert(result.message || "Failed to export programs");
+        showSuccessToast(`Laporan program berhasil diunduh (${programsFileType.toUpperCase()})!`);
+      } else {
+        showErrorToast(result.message || "Gagal mengekspor laporan program");
+      }
+    } catch (error) {
+      showErrorToast("Terjadi kesalahan saat mengekspor laporan");
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -210,6 +307,7 @@ export function SettingsPage() {
                 onChange={(e) =>
                   setProfileForm({ ...profileForm, name: e.target.value })
                 }
+                disabled={profileLoading}
               />
             </div>
             <div className="space-y-2">
@@ -219,6 +317,7 @@ export function SettingsPage() {
                 onChange={(e) =>
                   setProfileForm({ ...profileForm, email: e.target.value })
                 }
+                disabled={profileLoading}
               />
             </div>
             <div className="space-y-2">
@@ -231,9 +330,16 @@ export function SettingsPage() {
             <Button
               className="w-full mt-auto"
               onClick={handleUpdateProfile}
-              disabled={isLoading}
+              disabled={profileLoading || isLoading}
             >
-              {isLoading ? "Updating..." : "Update Profil"}
+              {profileLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Memperbarui...
+                </>
+              ) : (
+                "Update Profil"
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -243,10 +349,10 @@ export function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              Konfigurasi SLA & Cetak Laporan
+              Konfigurasi SLA
             </CardTitle>
             <CardDescription>
-              Atur batas waktu maksimal pengambilan keputusan dan cetak laporan
+              Atur batas waktu maksimal pengambilan keputusan
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -260,14 +366,15 @@ export function SettingsPage() {
                     setScreeningSLADays(Number.parseInt(e.target.value))
                   }
                   placeholder="Jumlah hari"
+                  disabled={slaLoading}
                 />
               </div>
               <Button
                 className="mt-7"
                 onClick={handleUpdateScreeningSLA}
-                disabled={isLoading}
+                disabled={slaLoading || isLoading}
               >
-                {isLoading ? "..." : "Simpan"}
+                {slaLoading ? "..." : "Simpan"}
               </Button>
             </div>
 
@@ -281,20 +388,35 @@ export function SettingsPage() {
                     setFinalSLADays(Number.parseInt(e.target.value))
                   }
                   placeholder="Jumlah hari"
+                  disabled={slaLoading}
                 />
               </div>
               <Button
                 className="mt-7"
                 onClick={handleUpdateFinalSLA}
-                disabled={isLoading}
+                disabled={slaLoading || isLoading}
               >
-                {isLoading ? "..." : "Simpan"}
+                {slaLoading ? "..." : "Simpan"}
               </Button>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="flex items-center gap-2">
-              <div className="flex-1 space-y-2">
-                <label className="text-sm font-medium">Laporan Pengajuan</label>
+        {/* Export Reports - Applications */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Cetak Laporan Pengajuan
+            </CardTitle>
+            <CardDescription>
+              Ekspor data pengajuan dalam format PDF atau Excel
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tipe Pengajuan</label>
                 <select
                   className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
                   value={applicationsType}
@@ -307,6 +429,7 @@ export function SettingsPage() {
                         | "funding"
                     )
                   }
+                  disabled={exportLoading}
                 >
                   <option value="all">Semua Tipe</option>
                   <option value="funding">Pendanaan</option>
@@ -314,18 +437,65 @@ export function SettingsPage() {
                   <option value="certification">Sertifikasi</option>
                 </select>
               </div>
-              <Button
-                className="mt-7"
-                onClick={handleExportApplications}
-                disabled={isLoading}
-              >
-                {isLoading ? "Exporting..." : "Cetak Laporan"}
-              </Button>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <div className="flex-1 space-y-2">
-                <label className="text-sm font-medium">Laporan Program</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Format File</label>
+                <select
+                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  value={applicationsFileType}
+                  onChange={(e) =>
+                    setApplicationsFileType(e.target.value as "pdf" | "excel")
+                  }
+                  disabled={exportLoading}
+                >
+                  <option value="pdf">PDF</option>
+                  <option value="excel">Excel</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium opacity-0">Action</label>
+                <Button
+                  className="w-full"
+                  onClick={handleExportApplications}
+                  disabled={exportLoading}
+                >
+                  {exportLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      Mengekspor...
+                    </>
+                  ) : (
+                    <>
+                      {applicationsFileType === "pdf" ? (
+                        <FileText className="h-4 w-4 mr-2" />
+                      ) : (
+                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                      )}
+                      Cetak Laporan
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Export Reports - Programs */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Cetak Laporan Program
+            </CardTitle>
+            <CardDescription>
+              Ekspor data program dalam format PDF atau Excel
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tipe Program</label>
                 <select
                   className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
                   value={programsType}
@@ -338,6 +508,7 @@ export function SettingsPage() {
                         | "funding"
                     )
                   }
+                  disabled={exportLoading}
                 >
                   <option value="all">Semua Tipe</option>
                   <option value="funding">Pendanaan</option>
@@ -345,13 +516,46 @@ export function SettingsPage() {
                   <option value="certification">Sertifikasi</option>
                 </select>
               </div>
-              <Button
-                className="mt-7"
-                onClick={handleExportPrograms}
-                disabled={isLoading}
-              >
-                {isLoading ? "Exporting..." : "Cetak Laporan"}
-              </Button>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Format File</label>
+                <select
+                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  value={programsFileType}
+                  onChange={(e) =>
+                    setProgramsFileType(e.target.value as "pdf" | "excel")
+                  }
+                  disabled={exportLoading}
+                >
+                  <option value="pdf">PDF</option>
+                  <option value="excel">Excel</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium opacity-0">Action</label>
+                <Button
+                  className="w-full"
+                  onClick={handleExportPrograms}
+                  disabled={exportLoading}
+                >
+                  {exportLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      Mengekspor...
+                    </>
+                  ) : (
+                    <>
+                      {programsFileType === "pdf" ? (
+                        <FileText className="h-4 w-4 mr-2" />
+                      ) : (
+                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                      )}
+                      Cetak Laporan
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

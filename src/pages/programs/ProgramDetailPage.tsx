@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { usePrograms } from "../../contexts/ProgramContext";
 import { Programs } from "../../lib/const";
+import { showSuccessToast, showErrorToast, showConfirmAlert } from "../../lib/toast";
 
 export default function ProgramDetailPage() {
   const { id } = useParams();
@@ -35,9 +36,11 @@ export default function ProgramDetailPage() {
     deleteProgram,
     activateProgram,
     deactivateProgram,
+    isLoading,
   } = usePrograms();
 
   const [isActive, setIsActive] = useState(program?.is_active || false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -45,7 +48,24 @@ export default function ProgramDetailPage() {
     }
   }, [id]);
 
-  if (!program) {
+  useEffect(() => {
+    if (program) {
+      setIsActive(program.is_active);
+    }
+  }, [program]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">Loading program details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!program && !isLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-top gap-4">
@@ -67,15 +87,61 @@ export default function ProgramDetailPage() {
   }
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this program?")) {
-      deleteProgram(Number(id));
-    }
+    showConfirmAlert({
+      message: `Apakah Anda yakin ingin menghapus program "${program?.title}"? Tindakan ini tidak dapat dibatalkan.`,
+      confirmText: "Ya, Hapus",
+      cancelText: "Batal",
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          const result = await deleteProgram(Number(id));
+          
+          if (result.success) {
+            showSuccessToast("Program berhasil dihapus");
+            setTimeout(() => {
+              navigate(`/programs/${program?.type}`);
+            }, 2000);
+          } else {
+            showErrorToast(result.message || "Gagal menghapus program");
+          }
+        } catch (error) {
+          showErrorToast("Terjadi kesalahan saat menghapus program");
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
   };
 
   const handleToggleActive = (checked: boolean) => {
-    setIsActive(checked);
-    if (checked) activateProgram(Number(id));
-    else deactivateProgram(Number(id));
+    const action = checked ? "mengaktifkan" : "menonaktifkan";
+    
+    showConfirmAlert({
+      message: `Apakah Anda yakin ingin ${action} program ini?`,
+      confirmText: `Ya, ${checked ? "Aktifkan" : "Nonaktifkan"}`,
+      cancelText: "Batal",
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          const result = checked
+            ? await activateProgram(Number(id))
+            : await deactivateProgram(Number(id));
+          
+          if (result.success) {
+            setIsActive(checked);
+            showSuccessToast(
+              `Program berhasil ${checked ? "diaktifkan" : "dinonaktifkan"}`
+            );
+          } else {
+            showErrorToast(result.message || `Gagal ${action} program`);
+          }
+        } catch (error) {
+          showErrorToast(`Terjadi kesalahan saat ${action} program`);
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
   };
 
   const formatCurrency = (amount: number) => {
@@ -85,6 +151,8 @@ export default function ProgramDetailPage() {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+
+  if (!program) return null;
 
   return (
     <div className="space-y-6">
@@ -103,14 +171,27 @@ export default function ProgramDetailPage() {
         </div>
         <div className="flex gap-2">
           <Link to={`/programs/${program.type}/${program.id}/edit`}>
-            <Button variant="outline">
+            <Button variant="outline" disabled={actionLoading}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
           </Link>
-          <Button variant="destructive" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
+          <Button 
+            variant="destructive" 
+            onClick={handleDelete}
+            disabled={actionLoading}
+          >
+            {actionLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -318,6 +399,7 @@ export default function ProgramDetailPage() {
                   id="active-toggle"
                   checked={isActive}
                   onCheckedChange={handleToggleActive}
+                  disabled={actionLoading}
                 />
               </div>
               <p className="text-sm text-muted-foreground">

@@ -15,6 +15,11 @@ import { Label } from "../components/ui/label";
 import { ArrowLeft, UserPlus } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useUsersManagement } from "../contexts/UserContext";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showWarningToast,
+} from "../lib/toast";
 
 export function EditAdminPage() {
   const navigate = useNavigate();
@@ -30,6 +35,7 @@ export function EditAdminPage() {
   } = useUsersManagement();
 
   const [error, setError] = useState("");
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -58,7 +64,7 @@ export function EditAdminPage() {
         email: currentUser.email,
         password: "",
         confirm_password: "",
-        role_id: 2, // Default, you might want to get this from currentUser if available
+        role_id: 2,
       });
     }
   }, [currentUser]);
@@ -68,28 +74,47 @@ export function EditAdminPage() {
     setError("");
 
     // Validation
+    if (!formData.name.trim()) {
+      showWarningToast("Nama lengkap tidak boleh kosong");
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      showWarningToast("Email tidak boleh kosong");
+      return;
+    }
+
     if (formData.password && formData.password !== formData.confirm_password) {
-      setError("Passwords do not match");
+      showWarningToast("Password dan konfirmasi password tidak cocok");
       return;
     }
 
     if (formData.password && formData.password.length < 8) {
-      setError("Password must be at least 8 characters");
+      showWarningToast("Password minimal 8 karakter");
       return;
     }
 
     if (!id) {
-      setError("User ID not found");
+      showErrorToast("User ID tidak ditemukan");
       return;
     }
 
-    const result = await updateUser(Number(id), formData);
+    setSubmitLoading(true);
+    try {
+      const result = await updateUser(Number(id), formData);
 
-    if (result.success) {
-      alert("User berhasil diupdate!");
-      navigate("/admin/list");
-    } else {
-      setError(result.message || "Failed to update user");
+      if (result.success) {
+        showSuccessToast("Data admin berhasil diperbarui!");
+        navigate("/admin/list");
+      } else {
+        showErrorToast(result.message || "Gagal memperbarui data admin");
+        setError(result.message || "Failed to update user");
+      }
+    } catch (error) {
+      showErrorToast("Terjadi kesalahan saat memperbarui data admin");
+      setError("An unexpected error occurred");
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -110,7 +135,9 @@ export function EditAdminPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
-          <h2 className="text-2xl font-bold text-destructive">User Not Found</h2>
+          <h2 className="text-2xl font-bold text-destructive">
+            User Not Found
+          </h2>
           <p className="text-muted-foreground">
             The user you're trying to edit doesn't exist.
           </p>
@@ -156,7 +183,7 @@ export function EditAdminPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">Nama Lengkap</Label>
+                <Label htmlFor="name">Nama Lengkap *</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -164,11 +191,12 @@ export function EditAdminPage() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="Masukkan nama lengkap"
+                  disabled={submitLoading}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -177,13 +205,14 @@ export function EditAdminPage() {
                     setFormData({ ...formData, email: e.target.value })
                   }
                   placeholder="admin@umkm.go.id"
+                  disabled={submitLoading}
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="role">Role *</Label>
               <select
                 id="role"
                 value={formData.role_id}
@@ -191,6 +220,7 @@ export function EditAdminPage() {
                   setFormData({ ...formData, role_id: Number(e.target.value) })
                 }
                 className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                disabled={submitLoading}
               >
                 {rolePermissions.map((role) => (
                   <option key={role.role_id} value={role.role_id}>
@@ -208,11 +238,11 @@ export function EditAdminPage() {
 
             <div className="border-t pt-4">
               <p className="text-sm text-muted-foreground mb-4">
-                Leave password fields empty if you don't want to change the password
+                Kosongkan kolom password jika tidak ingin mengubah password
               </p>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="password">New Password (Optional)</Label>
+                  <Label htmlFor="password">Password Baru (Opsional)</Label>
                   <Input
                     id="password"
                     type="password"
@@ -221,10 +251,13 @@ export function EditAdminPage() {
                       setFormData({ ...formData, password: e.target.value })
                     }
                     placeholder="Minimal 8 karakter"
+                    disabled={submitLoading}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Label htmlFor="confirmPassword">
+                    Konfirmasi Password Baru
+                  </Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -236,24 +269,33 @@ export function EditAdminPage() {
                       })
                     }
                     placeholder="Ulangi password"
+                    disabled={submitLoading}
                   />
                 </div>
               </div>
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="flex-1"
-                disabled={isLoading}
+                disabled={submitLoading || isLoading}
               >
-                {isLoading ? "Updating..." : "Update Admin"}
+                {submitLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Memperbarui...
+                  </>
+                ) : (
+                  "Update Admin"
+                )}
               </Button>
               <Button
                 asChild
                 type="button"
                 variant="outline"
                 className="flex-1 bg-transparent"
+                disabled={submitLoading}
               >
                 <Link to="/admin/list">Batal</Link>
               </Button>
