@@ -277,7 +277,7 @@ export function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4 flex flex-col">
-            {applications.slice(0, 5).map(
+            {applications?.slice(0, 5).map(
               (application) =>
                 application.status === Status.SCREENING && (
                   <Link
