@@ -46,15 +46,15 @@ export default function TrainingListPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Training Programs</h1>
+          <h1 className="text-3xl font-bold">Program Pelatihan</h1>
           <p className="text-muted-foreground">
-            Manage training programs for UMKM development
+            Kelola program pelatihan untuk pengembangan UMKM
           </p>
         </div>
         <Link to={`/programs/training/create?type=${Programs.TRAINING}`}>
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Create Program
+            Buat Program
           </Button>
         </Link>
       </div>
@@ -63,7 +63,7 @@ export default function TrainingListPage() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search programs..."
+            placeholder="Cari program..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -71,12 +71,12 @@ export default function TrainingListPage() {
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder="Filter berdasarkan status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="all">Semua Status</SelectItem>
+            <SelectItem value="active">Aktif</SelectItem>
+            <SelectItem value="inactive">Tidak Aktif</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -94,7 +94,7 @@ export default function TrainingListPage() {
                 variant={program.is_active ? "default" : "secondary"}
                 className="absolute top-2 right-2"
               >
-                {program.is_active ? "Active" : "Inactive"}
+                {program.is_active ? "Aktif" : "Tidak Aktif"}
               </Badge>
             </div>
             <CardHeader className="pb-3">
@@ -120,12 +120,12 @@ export default function TrainingListPage() {
               </p>
               <div className="text-xs text-muted-foreground mb-4">
                 <p>
-                  Created:{" "}
+                  Dibuat:{" "}
                   {program.created_at
                     ? new Date(program.created_at).toLocaleDateString("id-ID")
                     : "-"}
                 </p>
-                <p>By: {program.created_by}</p>
+                <p>Oleh: {program.created_by}</p>
               </div>
               <div className="flex justify-end">
                 <Link to={`/programs/training/${program.id}`}>
@@ -141,7 +141,9 @@ export default function TrainingListPage() {
 
       {filteredPrograms.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No training programs found.</p>
+          <p className="text-muted-foreground">
+            Program pelatihan tidak ditemukan.
+          </p>
         </div>
       )}
     </div>

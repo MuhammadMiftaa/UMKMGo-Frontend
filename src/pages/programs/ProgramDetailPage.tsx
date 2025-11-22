@@ -24,7 +24,11 @@ import {
 } from "lucide-react";
 import { usePrograms } from "../../contexts/ProgramContext";
 import { Programs } from "../../lib/const";
-import { showSuccessToast, showErrorToast, showConfirmAlert } from "../../lib/toast";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showConfirmAlert,
+} from "../../lib/toast";
 
 export default function ProgramDetailPage() {
   const { id } = useParams();
@@ -59,7 +63,7 @@ export default function ProgramDetailPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-          <p className="text-muted-foreground">Loading program details...</p>
+          <p className="text-muted-foreground">Memuat detail program...</p>
         </div>
       </div>
     );
@@ -69,7 +73,7 @@ export default function ProgramDetailPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-top gap-4">
-          <h1 className="text-3xl font-bold">Program Not Found</h1>
+          <h1 className="text-3xl font-bold">Program Tidak Ditemukan</h1>
           <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Kembali
@@ -78,7 +82,7 @@ export default function ProgramDetailPage() {
         <Card>
           <CardContent className="p-6">
             <p className="text-muted-foreground">
-              The program you're looking for doesn't exist.
+              Program yang Anda cari tidak ada.
             </p>
           </CardContent>
         </Card>
@@ -95,7 +99,7 @@ export default function ProgramDetailPage() {
         setActionLoading(true);
         try {
           const result = await deleteProgram(Number(id));
-          
+
           if (result.success) {
             showSuccessToast("Program berhasil dihapus");
             setTimeout(() => {
@@ -115,7 +119,7 @@ export default function ProgramDetailPage() {
 
   const handleToggleActive = (checked: boolean) => {
     const action = checked ? "mengaktifkan" : "menonaktifkan";
-    
+
     showConfirmAlert({
       message: `Apakah Anda yakin ingin ${action} program ini?`,
       confirmText: `Ya, ${checked ? "Aktifkan" : "Nonaktifkan"}`,
@@ -126,7 +130,7 @@ export default function ProgramDetailPage() {
           const result = checked
             ? await activateProgram(Number(id))
             : await deactivateProgram(Number(id));
-          
+
           if (result.success) {
             setIsActive(checked);
             showSuccessToast(
@@ -152,6 +156,32 @@ export default function ProgramDetailPage() {
     }).format(amount);
   };
 
+  const getProgramTypeLabel = (type: string) => {
+    switch (type) {
+      case Programs.TRAINING:
+        return "Pelatihan";
+      case Programs.CERTIFICATION:
+        return "Sertifikasi";
+      case Programs.FUNDING:
+        return "Pendanaan";
+      default:
+        return type;
+    }
+  };
+
+  const getTrainingTypeLabel = (type: string) => {
+    switch (type) {
+      case "online":
+        return "Online";
+      case "offline":
+        return "Offline";
+      case "hybrid":
+        return "Hybrid";
+      default:
+        return type;
+    }
+  };
+
   if (!program) return null;
 
   return (
@@ -160,7 +190,7 @@ export default function ProgramDetailPage() {
         <div className="flex items-top gap-4">
           <div>
             <h1 className="text-3xl font-bold">{program.title}</h1>
-            <p className="text-muted-foreground">Program Details</p>
+            <p className="text-muted-foreground">Detail Program</p>
           </div>
           <Link to={`/programs/${program.type}`}>
             <Button variant="outline" size="sm">
@@ -176,20 +206,20 @@ export default function ProgramDetailPage() {
               Edit
             </Button>
           </Link>
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             onClick={handleDelete}
             disabled={actionLoading}
           >
             {actionLoading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Processing...
+                Memproses...
               </>
             ) : (
               <>
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+                Hapus
               </>
             )}
           </Button>
@@ -209,7 +239,7 @@ export default function ProgramDetailPage() {
               variant={isActive ? "default" : "secondary"}
               className="absolute top-4 right-4"
             >
-              {isActive ? "Active" : "Inactive"}
+              {isActive ? "Aktif" : "Tidak Aktif"}
             </Badge>
           </div>
         </CardContent>
@@ -220,7 +250,7 @@ export default function ProgramDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Program Information</CardTitle>
+              <CardTitle>Informasi Program</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
@@ -232,23 +262,23 @@ export default function ProgramDetailPage() {
                 <div>
                   <p className="font-medium">{program.provider}</p>
                   <Badge variant="outline" className="capitalize">
-                    {program.type}
+                    {getProgramTypeLabel(program.type)}
                   </Badge>
                 </div>
               </div>
 
               <div>
-                <h3 className="font-semibold mb-2">Description</h3>
+                <h3 className="font-semibold mb-2">Deskripsi</h3>
                 <p className="text-muted-foreground">{program.description}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Created By</p>
+                  <p className="text-muted-foreground">Dibuat Oleh</p>
                   <p className="font-medium">{program.created_by_name}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Created At</p>
+                  <p className="text-muted-foreground">Dibuat Pada</p>
                   <p className="font-medium">
                     {program.created_at
                       ? new Date(program.created_at).toLocaleDateString("id-ID")
@@ -264,8 +294,8 @@ export default function ProgramDetailPage() {
             program.type === Programs.CERTIFICATION) && (
             <Card>
               <CardHeader>
-                <CardTitle className="capitalize">
-                  {program.type} Details
+                <CardTitle>
+                  Detail {getProgramTypeLabel(program.type)}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -273,10 +303,10 @@ export default function ProgramDetailPage() {
                   {program.training_type && (
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="capitalize">
-                        {program.training_type}
+                        {getTrainingTypeLabel(program.training_type)}
                       </Badge>
                       <span className="text-sm text-muted-foreground">
-                        Type
+                        Tipe
                       </span>
                     </div>
                   )}
@@ -316,7 +346,7 @@ export default function ProgramDetailPage() {
           {program.type === Programs.FUNDING && (
             <Card>
               <CardHeader>
-                <CardTitle>Funding Details</CardTitle>
+                <CardTitle>Detail Pendanaan</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -332,7 +362,7 @@ export default function ProgramDetailPage() {
                   {program.interest_rate && (
                     <div className="flex items-center gap-2 text-sm">
                       <Percent className="h-4 w-4 text-muted-foreground" />
-                      <span>{program.interest_rate}% Interest Rate</span>
+                      <span>Suku Bunga {program.interest_rate}%</span>
                     </div>
                   )}
                 </div>
@@ -340,7 +370,9 @@ export default function ProgramDetailPage() {
                 {program.max_tenure_months && (
                   <div className="flex items-center gap-2 text-sm">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>Max {program.max_tenure_months} months tenure</span>
+                    <span>
+                      Maksimal {program.max_tenure_months} bulan tenor
+                    </span>
                   </div>
                 )}
               </CardContent>
@@ -351,7 +383,7 @@ export default function ProgramDetailPage() {
           {program.benefits && program.benefits.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Benefits</CardTitle>
+                <CardTitle>Manfaat</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
@@ -370,7 +402,7 @@ export default function ProgramDetailPage() {
           {program.requirements && program.requirements.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Requirements</CardTitle>
+                <CardTitle>Persyaratan</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
@@ -390,11 +422,11 @@ export default function ProgramDetailPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Program Status</CardTitle>
+              <CardTitle>Status Program</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label htmlFor="active-toggle">Active Status</Label>
+                <Label htmlFor="active-toggle">Status Aktif</Label>
                 <Switch
                   id="active-toggle"
                   checked={isActive}
@@ -404,15 +436,15 @@ export default function ProgramDetailPage() {
               </div>
               <p className="text-sm text-muted-foreground">
                 {isActive
-                  ? "Program is currently active and accepting applications."
-                  : "Program is inactive and not accepting applications."}
+                  ? "Program saat ini aktif dan menerima pendaftaran."
+                  : "Program tidak aktif dan tidak menerima pendaftaran."}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Application Deadline</CardTitle>
+              <CardTitle>Batas Waktu Pendaftaran</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">

@@ -43,7 +43,7 @@ const menuItems = [
     permission: [],
   },
   {
-    title: "Programs",
+    title: "Program",
     icon: FolderOpen,
     permission: [
       Permissions.MANAGE_TRAINING_PROGRAMS,

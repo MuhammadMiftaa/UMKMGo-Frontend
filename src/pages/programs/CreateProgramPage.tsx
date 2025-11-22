@@ -39,7 +39,7 @@ import {
 
 export default function CreateProgramPage() {
   const { id } = useParams();
-  const isEditMode = !!id; // Check if we're in edit mode
+  const isEditMode = !!id;
 
   const {
     createProgram,
@@ -82,13 +82,11 @@ export default function CreateProgramPage() {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  // Load program data when editing
   useEffect(() => {
     if (isEditMode && id) {
       getProgramById(Number(id));
     }
 
-    // Cleanup when unmounting
     return () => {
       if (isEditMode) {
         clearCurrentProgram();
@@ -96,7 +94,6 @@ export default function CreateProgramPage() {
     };
   }, [id, isEditMode]);
 
-  // Populate form when currentProgram is loaded
   useEffect(() => {
     if (isEditMode && currentProgram) {
       setFormData({
@@ -123,7 +120,6 @@ export default function CreateProgramPage() {
         requirements: currentProgram.requirements || [],
       });
 
-      // Set image previews if exists
       if (currentProgram.banner) {
         setBannerPreview(currentProgram.banner);
       }
@@ -142,13 +138,11 @@ export default function CreateProgramPage() {
     file: File
   ) => {
     try {
-      // Validate file type
       if (!isImageFile(file)) {
         showWarningToast("Mohon upload file gambar (JPG, PNG, dll)");
         return;
       }
 
-      // Validate file size (max 5MB)
       if (!validateImageSize(file, 5)) {
         showWarningToast("Ukuran file maksimal 5MB");
         return;
@@ -156,13 +150,10 @@ export default function CreateProgramPage() {
 
       setIsUploading(true);
 
-      // Convert to base64
       const base64String = await fileToBase64(file);
 
-      // Save base64 to formData
       handleInputChange(field, base64String);
 
-      // Set preview
       if (field === "banner") {
         setBannerPreview(base64String);
       } else {
@@ -226,7 +217,6 @@ export default function CreateProgramPage() {
     e.preventDefault();
     setError("");
 
-    // Validation
     if (
       !formData.title ||
       !formData.description ||
@@ -246,10 +236,8 @@ export default function CreateProgramPage() {
 
     try {
       if (isEditMode && id) {
-        // Update existing program
         result = await updateProgram(Number(id), formData);
       } else {
-        // Create new program
         result = await createProgram(formData);
       }
 
@@ -267,62 +255,74 @@ export default function CreateProgramPage() {
         );
         setError(
           result.message ||
-            `Failed to ${isEditMode ? "update" : "create"} program`
+            `Gagal ${isEditMode ? "memperbarui" : "membuat"} program`
         );
       }
     } catch (error) {
       showErrorToast(
         `Terjadi kesalahan saat ${isEditMode ? "memperbarui" : "membuat"} program`
       );
-      setError("An unexpected error occurred");
+      setError("Terjadi kesalahan yang tidak terduga");
     } finally {
       setIsUploading(false);
     }
   };
 
-  // Show loading state when fetching program data
   if (isEditMode && isLoading && !currentProgram) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-          <p className="text-muted-foreground">Loading program data...</p>
+          <p className="text-muted-foreground">Memuat data program...</p>
         </div>
       </div>
     );
   }
 
-  // Show error if program not found in edit mode
   if (isEditMode && !isLoading && !currentProgram && id) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
           <h2 className="text-2xl font-bold text-destructive">
-            Program Not Found
+            Program Tidak Ditemukan
           </h2>
           <p className="text-muted-foreground">
-            The program you're trying to edit doesn't exist.
+            Program yang ingin Anda edit tidak ada.
           </p>
           <Button onClick={() => navigate("/programs")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Programs
+            Kembali ke Program
           </Button>
         </div>
       </div>
     );
   }
 
+  const getProgramTypeLabel = (type: string) => {
+    switch (type) {
+      case Programs.TRAINING:
+        return "Pelatihan";
+      case Programs.CERTIFICATION:
+        return "Sertifikasi";
+      case Programs.FUNDING:
+        return "Pendanaan";
+      default:
+        return type;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center w-full justify-between">
         <div>
           <h1 className="text-3xl font-bold capitalize">
-            {isEditMode ? "Edit" : "Create"} {formData.type} Program
+            {isEditMode ? "Edit" : "Buat"} Program{" "}
+            {getProgramTypeLabel(formData.type)}
           </h1>
           <p className="text-muted-foreground">
             {isEditMode
-              ? `Update ${formData.type} program details`
-              : `Add a new ${formData.type} program`}
+              ? `Perbarui detail program ${getProgramTypeLabel(formData.type).toLowerCase()}`
+              : `Tambahkan program ${getProgramTypeLabel(formData.type).toLowerCase()} baru`}
           </p>
         </div>
         <Button
@@ -337,7 +337,7 @@ export default function CreateProgramPage() {
 
       {error && (
         <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg">
-          <p className="font-medium">Error</p>
+          <p className="font-medium">Kesalahan</p>
           <p className="text-sm">{error}</p>
         </div>
       )}
@@ -345,43 +345,43 @@ export default function CreateProgramPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
+            <CardTitle>Informasi Dasar</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Program Title *</Label>
+                <Label htmlFor="title">Judul Program *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => handleInputChange("title", e.target.value)}
-                  placeholder="Enter program title"
+                  placeholder="Masukkan judul program"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="provider">Provider *</Label>
+                <Label htmlFor="provider">Penyedia *</Label>
                 <Input
                   id="provider"
                   value={formData.provider}
                   onChange={(e) =>
                     handleInputChange("provider", e.target.value)
                   }
-                  placeholder="Enter provider name"
+                  placeholder="Masukkan nama penyedia"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description *</Label>
+              <Label htmlFor="description">Deskripsi *</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) =>
                   handleInputChange("description", e.target.value)
                 }
-                placeholder="Enter program description"
+                placeholder="Masukkan deskripsi program"
                 rows={4}
                 required
               />
@@ -389,43 +389,33 @@ export default function CreateProgramPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="type">Program Type *</Label>
+                <Label htmlFor="type">Jenis Program *</Label>
                 <Select
                   value={formData.type}
                   onValueChange={(value: ProgramType) =>
                     handleInputChange("type", value)
                   }
-                  disabled={isEditMode} // Disable changing type in edit mode
+                  disabled={isEditMode}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem
-                      value={Programs.TRAINING}
-                      className="capitalize"
-                    >
-                      {Programs.TRAINING}
+                    <SelectItem value={Programs.TRAINING}>Pelatihan</SelectItem>
+                    <SelectItem value={Programs.CERTIFICATION}>
+                      Sertifikasi
                     </SelectItem>
-                    <SelectItem
-                      value={Programs.CERTIFICATION}
-                      className="capitalize"
-                    >
-                      {Programs.CERTIFICATION}
-                    </SelectItem>
-                    <SelectItem value={Programs.FUNDING} className="capitalize">
-                      {Programs.FUNDING}
-                    </SelectItem>
+                    <SelectItem value={Programs.FUNDING}>Pendanaan</SelectItem>
                   </SelectContent>
                 </Select>
                 {isEditMode && (
                   <p className="text-xs text-muted-foreground">
-                    Program type cannot be changed when editing
+                    Jenis program tidak dapat diubah saat mengedit
                   </p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="deadline">Application Deadline *</Label>
+                <Label htmlFor="deadline">Batas Waktu Pendaftaran *</Label>
                 <Input
                   id="deadline"
                   type="date"
@@ -446,27 +436,26 @@ export default function CreateProgramPage() {
                   handleInputChange("is_active", checked)
                 }
               />
-              <Label htmlFor="is_active">Active Program</Label>
+              <Label htmlFor="is_active">Program Aktif</Label>
             </div>
           </CardContent>
         </Card>
 
-        {/* Training/Certification Specific Fields */}
         {(formData.type === Programs.TRAINING ||
           formData.type === Programs.CERTIFICATION) && (
           <Card>
             <CardHeader>
               <CardTitle>
+                Detail{" "}
                 {formData.type === Programs.TRAINING
-                  ? "Training"
-                  : "Certification"}{" "}
-                Details
+                  ? "Pelatihan"
+                  : "Sertifikasi"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="training_type">Type</Label>
+                  <Label htmlFor="training_type">Tipe</Label>
                   <Select
                     value={formData.training_type}
                     onValueChange={(value: TrainingType) =>
@@ -474,32 +463,23 @@ export default function CreateProgramPage() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder="Pilih tipe" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem
-                        value={TrainingTypes.ONLINE}
-                        className="capitalize"
-                      >
-                        {TrainingTypes.ONLINE}
+                      <SelectItem value={TrainingTypes.ONLINE}>
+                        Online
                       </SelectItem>
-                      <SelectItem
-                        value={TrainingTypes.OFFLINE}
-                        className="capitalize"
-                      >
-                        {TrainingTypes.OFFLINE}
+                      <SelectItem value={TrainingTypes.OFFLINE}>
+                        Offline
                       </SelectItem>
-                      <SelectItem
-                        value={TrainingTypes.HYBRID}
-                        className="capitalize"
-                      >
-                        {TrainingTypes.HYBRID}
+                      <SelectItem value={TrainingTypes.HYBRID}>
+                        Hybrid
                       </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="batch">Batch Number</Label>
+                  <Label htmlFor="batch">Nomor Batch</Label>
                   <Input
                     id="batch"
                     type="number"
@@ -510,14 +490,14 @@ export default function CreateProgramPage() {
                         Number.parseInt(e.target.value)
                       )
                     }
-                    placeholder="e.g., 1"
+                    placeholder="contoh: 1"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="batch_start">Batch Start Date</Label>
+                  <Label htmlFor="batch_start">Tanggal Mulai Batch</Label>
                   <Input
                     id="batch_start"
                     type="date"
@@ -528,7 +508,7 @@ export default function CreateProgramPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="batch_end">Batch End Date</Label>
+                  <Label htmlFor="batch_end">Tanggal Akhir Batch</Label>
                   <Input
                     id="batch_end"
                     type="date"
@@ -541,30 +521,29 @@ export default function CreateProgramPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
+                <Label htmlFor="location">Lokasi</Label>
                 <Input
                   id="location"
                   value={formData.location || ""}
                   onChange={(e) =>
                     handleInputChange("location", e.target.value)
                   }
-                  placeholder="Enter location"
+                  placeholder="Masukkan lokasi"
                 />
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Funding Specific Fields */}
         {formData.type === Programs.FUNDING && (
           <Card>
             <CardHeader>
-              <CardTitle>Funding Details</CardTitle>
+              <CardTitle>Detail Pendanaan</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="min_amount">Minimum Amount (IDR)</Label>
+                  <Label htmlFor="min_amount">Jumlah Minimum (IDR)</Label>
                   <Input
                     id="min_amount"
                     type="number"
@@ -575,11 +554,11 @@ export default function CreateProgramPage() {
                         Number.parseFloat(e.target.value)
                       )
                     }
-                    placeholder="e.g., 5000000"
+                    placeholder="contoh: 5000000"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="max_amount">Maximum Amount (IDR)</Label>
+                  <Label htmlFor="max_amount">Jumlah Maksimum (IDR)</Label>
                   <Input
                     id="max_amount"
                     type="number"
@@ -590,14 +569,14 @@ export default function CreateProgramPage() {
                         Number.parseFloat(e.target.value)
                       )
                     }
-                    placeholder="e.g., 500000000"
+                    placeholder="contoh: 500000000"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="interest_rate">Interest Rate (%)</Label>
+                  <Label htmlFor="interest_rate">Suku Bunga (%)</Label>
                   <Input
                     id="interest_rate"
                     type="number"
@@ -609,11 +588,11 @@ export default function CreateProgramPage() {
                         Number.parseFloat(e.target.value)
                       )
                     }
-                    placeholder="e.g., 6.5"
+                    placeholder="contoh: 6.5"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="max_tenure">Max Tenure (Months)</Label>
+                  <Label htmlFor="max_tenure">Tenor Maksimal (Bulan)</Label>
                   <Input
                     id="max_tenure"
                     type="number"
@@ -624,7 +603,7 @@ export default function CreateProgramPage() {
                         Number.parseInt(e.target.value)
                       )
                     }
-                    placeholder="e.g., 36"
+                    placeholder="contoh: 36"
                   />
                 </div>
               </div>
@@ -632,21 +611,20 @@ export default function CreateProgramPage() {
           </Card>
         )}
 
-        {/* Image Uploads */}
         <Card>
           <CardHeader>
-            <CardTitle>Images</CardTitle>
+            <CardTitle>Gambar</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label>Program Banner (2:3 ratio) *</Label>
+                <Label>Banner Program (rasio 2:3) *</Label>
                 <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4">
                   {bannerPreview ? (
                     <div className="space-y-2">
                       <img
                         src={bannerPreview || "/placeholder.svg"}
-                        alt="Banner preview"
+                        alt="Pratinjau banner"
                         className="w-full h-48 object-cover rounded"
                       />
                       <Button
@@ -659,7 +637,7 @@ export default function CreateProgramPage() {
                         }}
                         disabled={isUploading}
                       >
-                        Remove
+                        Hapus
                       </Button>
                     </div>
                   ) : (
@@ -672,8 +650,8 @@ export default function CreateProgramPage() {
                         >
                           <span className="text-sm text-muted-foreground">
                             {isUploading
-                              ? "Uploading..."
-                              : "Click to upload banner"}
+                              ? "Mengupload..."
+                              : "Klik untuk upload banner"}
                           </span>
                           <Input
                             id="banner-upload"
@@ -694,13 +672,13 @@ export default function CreateProgramPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Provider Logo (1:1 ratio) *</Label>
+                <Label>Logo Penyedia (rasio 1:1) *</Label>
                 <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4">
                   {logoPreview ? (
                     <div className="space-y-2">
                       <img
                         src={logoPreview || "/placeholder.svg"}
-                        alt="Logo preview"
+                        alt="Pratinjau logo"
                         className="w-24 h-24 object-cover rounded mx-auto"
                       />
                       <Button
@@ -713,7 +691,7 @@ export default function CreateProgramPage() {
                         }}
                         disabled={isUploading}
                       >
-                        Remove
+                        Hapus
                       </Button>
                     </div>
                   ) : (
@@ -723,8 +701,8 @@ export default function CreateProgramPage() {
                         <Label htmlFor="logo-upload" className="cursor-pointer">
                           <span className="text-sm text-muted-foreground">
                             {isUploading
-                              ? "Uploading..."
-                              : "Click to upload logo"}
+                              ? "Mengupload..."
+                              : "Klik untuk upload logo"}
                           </span>
                           <Input
                             id="logo-upload"
@@ -747,11 +725,10 @@ export default function CreateProgramPage() {
           </CardContent>
         </Card>
 
-        {/* Benefits */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              Benefits
+              Manfaat
               <Button
                 type="button"
                 variant="outline"
@@ -759,14 +736,14 @@ export default function CreateProgramPage() {
                 onClick={addBenefit}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Benefit
+                Tambah Manfaat
               </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {formData?.benefits?.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                No benefits added yet.
+                Belum ada manfaat yang ditambahkan.
               </p>
             ) : (
               formData?.benefits?.map((benefit, index) => (
@@ -774,7 +751,7 @@ export default function CreateProgramPage() {
                   <Input
                     value={benefit}
                     onChange={(e) => updateBenefit(index, e.target.value)}
-                    placeholder="Enter benefit description"
+                    placeholder="Masukkan deskripsi manfaat"
                     className="flex-1"
                   />
                   <Button
@@ -791,11 +768,10 @@ export default function CreateProgramPage() {
           </CardContent>
         </Card>
 
-        {/* Requirements */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              Requirements
+              Persyaratan
               <Button
                 type="button"
                 variant="outline"
@@ -803,14 +779,14 @@ export default function CreateProgramPage() {
                 onClick={addRequirement}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Requirement
+                Tambah Persyaratan
               </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {formData?.requirements?.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                No requirements added yet.
+                Belum ada persyaratan yang ditambahkan.
               </p>
             ) : (
               formData?.requirements?.map((requirement, index) => (
@@ -818,7 +794,7 @@ export default function CreateProgramPage() {
                   <Input
                     value={requirement}
                     onChange={(e) => updateRequirement(index, e.target.value)}
-                    placeholder="Enter requirement description"
+                    placeholder="Masukkan deskripsi persyaratan"
                     className="flex-1"
                   />
                   <Button
@@ -835,7 +811,6 @@ export default function CreateProgramPage() {
           </CardContent>
         </Card>
 
-        {/* Form Actions */}
         <div className="flex gap-4 justify-end">
           <Button
             type="button"
@@ -843,16 +818,16 @@ export default function CreateProgramPage() {
             onClick={() => navigate(`/programs/${formData.type}`)}
             disabled={isLoading || isUploading}
           >
-            Cancel
+            Batal
           </Button>
           <Button type="submit" disabled={isLoading || isUploading}>
             {isLoading
               ? isEditMode
-                ? "Updating..."
-                : "Creating..."
+                ? "Memperbarui..."
+                : "Membuat..."
               : isEditMode
-                ? "Update Program"
-                : "Create Program"}
+                ? "Perbarui Program"
+                : "Buat Program"}
           </Button>
         </div>
       </form>
