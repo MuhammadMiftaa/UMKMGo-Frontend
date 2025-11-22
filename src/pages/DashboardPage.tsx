@@ -30,7 +30,12 @@ import { useApplications } from "../contexts/ApplicationContext";
 import { useDashboard } from "../contexts/DashboardContext";
 import { Programs, Status } from "../lib/const";
 
-const COLORS = ["#6366f1", "#f59e0b", "#10b981"];
+const COLORS = [
+  "#0284c7", // sky-600
+  "#0ea5e9", // sky-500 (base)
+  "#38bdf8", // sky-400
+  "#7dd3fc", // sky-300
+];
 
 const chartConfig = {
   count: {
@@ -70,9 +75,9 @@ export function DashboardPage() {
   // Transform application by type for bar chart
   const typeData = applicationByType
     ? [
-        { name: "Training", count: applicationByType.training },
-        { name: "Certification", count: applicationByType.certification },
-        { name: "Funding", count: applicationByType.funding },
+        { name: "Pelatihan", count: applicationByType.training },
+        { name: "Sertifikasi", count: applicationByType.certification },
+        { name: "Pendanaan", count: applicationByType.funding },
       ]
     : [];
 
@@ -152,7 +157,7 @@ export function DashboardPage() {
       </div>
 
       {/* Charts */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Distribusi Status</CardTitle>
@@ -205,7 +210,14 @@ export function DashboardPage() {
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#6366f1" />
+                  <Bar dataKey="count" fill="var(--color-sky-500)">
+                    {typeData.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -215,59 +227,66 @@ export function DashboardPage() {
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Card Type Distribution */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Distribusi Jenis Kartu</CardTitle>
-          <CardDescription>
-            Perbandingan jumlah pengguna berdasarkan jenis kartu yang dimiliki
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {cardTypeData.length > 0 ? (
-            <ChartContainer config={chartConfig}>
-              <BarChart
-                accessibilityLayer
-                barGap={0.05}
-                barCategoryGap={0.05}
-                data={cardTypeData}
-                layout="vertical"
-                margin={{
-                  left: -20,
-                }}
-              >
-                <XAxis type="number" dataKey="count" hide />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  tickLine={false}
-                  tickMargin={1}
-                  axisLine={false}
-                  tickFormatter={(value) => value.slice(0, 100)}
-                  width={200}
-                  fontSize={14}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
-                />
-                <Bar
-                  dataKey="count"
-                  fill="var(--color-sky-500)"
-                  radius={20}
-                  barSize={200}
-                />
-              </BarChart>
-            </ChartContainer>
-          ) : (
-            <div className="flex items-center justify-center h-[200px] text-muted-foreground">
-              No data available
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {/* Card Type Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Distribusi Jenis Kartu</CardTitle>
+            <CardDescription>
+              Perbandingan jumlah pengguna berdasarkan jenis kartu yang dimiliki
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {cardTypeData.length > 0 ? (
+              <ChartContainer config={chartConfig}>
+                <BarChart
+                  accessibilityLayer
+                  barGap={0.05}
+                  barCategoryGap={0.05}
+                  data={cardTypeData}
+                  layout="vertical"
+                  margin={{
+                    left: -20,
+                  }}
+                >
+                  <XAxis type="number" dataKey="count" hide />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    tickLine={false}
+                    tickMargin={1}
+                    axisLine={false}
+                    tickFormatter={(value) => value.slice(0, 100)}
+                    width={100}
+                    fontSize={14}
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel />}
+                  />
+                  <Bar
+                    dataKey="count"
+                    fill="var(--color-sky-500)"
+                    radius={10}
+                    barSize={100}
+                  >
+                    {cardTypeData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ChartContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                No data available
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Recent Applications */}
       <Card>

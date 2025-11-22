@@ -52,19 +52,19 @@ const menuItems = [
     ],
     subItems: [
       {
-        title: "Trainings",
+        title: "Pelatihan",
         url: "/programs/training",
         icon: GraduationCap,
         permission: [Permissions.MANAGE_TRAINING_PROGRAMS],
       },
       {
-        title: "Certifications",
+        title: "Sertifikasi",
         url: "/programs/certification",
         icon: Award,
         permission: [Permissions.MANAGE_CERTIFICATION_PROGRAMS],
       },
       {
-        title: "Fundings",
+        title: "Pendanaan",
         url: "/programs/funding",
         icon: DollarSign,
         permission: [Permissions.MANAGE_FUNDING_PROGRAMS],

@@ -141,6 +141,7 @@ export function CertificationPage() {
                 <div className="text-right space-y-2">
                   <div className="flex items-center gap-2">
                     <Badge
+                      className="capitalize"
                       variant={
                         application.status === Status.APPROVED
                           ? "success"
