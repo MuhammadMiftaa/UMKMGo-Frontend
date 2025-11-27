@@ -81,6 +81,19 @@ export function DashboardPage() {
       ]
     : [];
 
+  const getProgramTypeLabel = (type: string) => {
+    switch (type) {
+      case Programs.TRAINING:
+        return "Pelatihan";
+      case Programs.CERTIFICATION:
+        return "Sertifikasi";
+      case Programs.FUNDING:
+        return "Pendanaan";
+      default:
+        return type;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -338,7 +351,7 @@ export function DashboardPage() {
                           {application.status}
                         </Badge>
                         <p className="text-xs text-muted-foreground capitalize">
-                          {application.type}
+                          {getProgramTypeLabel(application.type)}
                         </p>
                       </div>
                     </div>

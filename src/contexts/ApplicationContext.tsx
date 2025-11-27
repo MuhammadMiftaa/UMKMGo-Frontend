@@ -100,6 +100,39 @@ export interface Program {
   location?: string;
   type?: ApplicationType;
   provider?: string;
+  application_deadline?: string;
+}
+
+// Training specific data
+export interface TrainingApplicationData {
+  motivation: string;
+  business_experience?: string;
+  learning_objectives?: string;
+  availability_notes?: string;
+}
+
+// Certification specific data
+export interface CertificationApplicationData {
+  business_sector: string;
+  product_or_service: string;
+  business_description: string;
+  years_operating?: number;
+  current_standards?: string;
+  certification_goals: string;
+}
+
+// Funding specific data
+export interface FundingApplicationData {
+  business_sector: string;
+  business_description: string;
+  years_operating?: number;
+  requested_amount: number;
+  fund_purpose: string;
+  business_plan?: string;
+  revenue_projection?: number;
+  monthly_revenue?: number;
+  requested_tenure_months?: number;
+  collateral_description?: string;
 }
 
 export interface Application {
@@ -116,6 +149,10 @@ export interface Application {
   histories?: ApplicationHistory[];
   program?: Program;
   umkm?: UMKM;
+  // Type-specific data
+  training_data?: TrainingApplicationData;
+  certification_data?: CertificationApplicationData;
+  funding_data?: FundingApplicationData;
 }
 
 export interface ApplicationDecision {

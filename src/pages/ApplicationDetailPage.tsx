@@ -11,7 +11,14 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
 import { useAuth } from "../contexts/AuthContext";
-import { ArrowLeft, FileText, User, Calendar, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  User,
+  Calendar,
+  MapPin,
+  ExternalLink,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   HistoryAction,
@@ -255,6 +262,22 @@ export function ApplicationDetailPage() {
     });
   };
 
+  const formatDocumentType = (type: string): string => {
+    // Convert camelCase or snake_case to Capital Case
+    return type
+      .replace(/([A-Z])/g, " $1") // Add space before capital letters
+      .replace(/[_-]/g, " ") // Replace underscores and hyphens with spaces
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ")
+      .trim();
+  };
+
+  const handleDownloadDocument = (file: string, type: string) => {
+    // Open file in new tab
+    window.open(file, "_blank");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -353,43 +376,288 @@ export function ApplicationDetailPage() {
                     {ProgramsMap[application.type]}
                   </p>
                 </div>
-                {application.type === Programs.TRAINING && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Jenis Pelatihan
-                    </label>
-                    <p className="text-sm">
-                      {application.program?.title ?? "-"}
-                    </p>
-                  </div>
-                )}
-                {application.type === Programs.CERTIFICATION && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Skema Sertifikasi
-                    </label>
-                    <p className="text-sm">{application.program?.title}</p>
-                  </div>
-                )}
-                {application.amount && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Nominal Pengajuan
-                    </label>
-                    <p className="text-sm font-semibold text-green-600">
-                      {formatCurrency(application.amount)}
-                    </p>
-                  </div>
-                )}
-                {application.fundingPurpose && (
-                  <div className="md:col-span-2">
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Tujuan Pendanaan
-                    </label>
-                    <p className="text-sm">{application.fundingPurpose}</p>
-                  </div>
-                )}
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Nama Program
+                  </label>
+                  <p className="text-sm">{application.program?.title ?? "-"}</p>
+                </div>
+
+                {/* Training Specific Fields */}
+                {application.type === Programs.TRAINING &&
+                  application.training_data && (
+                    <>
+                      <div className="md:col-span-2">
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Motivasi
+                        </label>
+                        <p className="text-sm">
+                          {application.training_data.motivation}
+                        </p>
+                      </div>
+                      {application.training_data.business_experience && (
+                        <div className="md:col-span-2">
+                          <label className="text-sm font-medium text-muted-foreground">
+                            Pengalaman Usaha
+                          </label>
+                          <p className="text-sm">
+                            {application.training_data.business_experience}
+                          </p>
+                        </div>
+                      )}
+                      {application.training_data.learning_objectives && (
+                        <div className="md:col-span-2">
+                          <label className="text-sm font-medium text-muted-foreground">
+                            Target Pembelajaran
+                          </label>
+                          <p className="text-sm">
+                            {application.training_data.learning_objectives}
+                          </p>
+                        </div>
+                      )}
+                      {application.training_data.availability_notes && (
+                        <div className="md:col-span-2">
+                          <label className="text-sm font-medium text-muted-foreground">
+                            Catatan Ketersediaan
+                          </label>
+                          <p className="text-sm">
+                            {application.training_data.availability_notes}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                {/* Certification Specific Fields */}
+                {application.type === Programs.CERTIFICATION &&
+                  application.certification_data && (
+                    <>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Sektor Usaha
+                        </label>
+                        <p className="text-sm font-semibold">
+                          {application.certification_data.business_sector}
+                        </p>
+                      </div>
+                      {application.certification_data.years_operating && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">
+                            Lama Usaha
+                          </label>
+                          <p className="text-sm font-semibold">
+                            {application.certification_data.years_operating}{" "}
+                            Tahun
+                          </p>
+                        </div>
+                      )}
+                      <div className="md:col-span-2">
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Produk/Layanan yang Disertifikasi
+                        </label>
+                        <p className="text-sm font-semibold">
+                          {application.certification_data.product_or_service}
+                        </p>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Deskripsi Usaha
+                        </label>
+                        <p className="text-sm">
+                          {application.certification_data.business_description}
+                        </p>
+                      </div>
+                      {application.certification_data.current_standards && (
+                        <div className="md:col-span-2">
+                          <label className="text-sm font-medium text-muted-foreground">
+                            Standar yang Sudah Diterapkan
+                          </label>
+                          <p className="text-sm">
+                            {application.certification_data.current_standards}
+                          </p>
+                        </div>
+                      )}
+                      <div className="md:col-span-2">
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Tujuan Sertifikasi
+                        </label>
+                        <p className="text-sm">
+                          {application.certification_data.certification_goals}
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                {/* Funding Specific Fields */}
+                {application.type === Programs.FUNDING &&
+                  application.funding_data && (
+                    <>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Sektor Usaha
+                        </label>
+                        <p className="text-sm font-semibold">
+                          {application.funding_data.business_sector}
+                        </p>
+                      </div>
+                      {application.funding_data.years_operating && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">
+                            Lama Usaha
+                          </label>
+                          <p className="text-sm font-semibold">
+                            {application.funding_data.years_operating} Tahun
+                          </p>
+                        </div>
+                      )}
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Jumlah Dana Diajukan
+                        </label>
+                        <p className="text-sm font-semibold text-green-600">
+                          {formatCurrency(
+                            application.funding_data.requested_amount
+                          )}
+                        </p>
+                      </div>
+                      {application.funding_data.requested_tenure_months && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">
+                            Tenor
+                          </label>
+                          <p className="text-sm font-semibold">
+                            {application.funding_data.requested_tenure_months}{" "}
+                            Bulan
+                          </p>
+                        </div>
+                      )}
+                      {application.funding_data.monthly_revenue && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">
+                            Omzet Bulanan
+                          </label>
+                          <p className="text-sm font-semibold">
+                            {formatCurrency(
+                              application.funding_data.monthly_revenue
+                            )}
+                          </p>
+                        </div>
+                      )}
+                      <div className="md:col-span-2">
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Deskripsi Usaha
+                        </label>
+                        <p className="text-sm">
+                          {application.funding_data.business_description}
+                        </p>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Tujuan Penggunaan Dana
+                        </label>
+                        <p className="text-sm">
+                          {application.funding_data.fund_purpose}
+                        </p>
+                      </div>
+                      {application.funding_data.business_plan && (
+                        <div className="md:col-span-2">
+                          <label className="text-sm font-medium text-muted-foreground">
+                            Rencana Bisnis
+                          </label>
+                          <p className="text-sm">
+                            {application.funding_data.business_plan}
+                          </p>
+                        </div>
+                      )}
+                      {application.funding_data.revenue_projection && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">
+                            Proyeksi Omzet
+                          </label>
+                          <p className="text-sm font-semibold">
+                            {formatCurrency(
+                              application.funding_data.revenue_projection
+                            )}
+                          </p>
+                        </div>
+                      )}
+                      {application.funding_data.collateral_description && (
+                        <div className="md:col-span-2">
+                          <label className="text-sm font-medium text-muted-foreground">
+                            Agunan/Jaminan
+                          </label>
+                          <p className="text-sm">
+                            {application.funding_data.collateral_description}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Berkas Pengajuan */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Berkas Pengajuan
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {application.documents && application.documents.length > 0 ? (
+                <div className="space-y-3">
+                  {application.documents.map((doc, index) => (
+                    <div
+                      key={doc.id || index}
+                      className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <FileText className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {formatDocumentType(doc.type)}
+                          </p>
+                          {doc.created_at && (
+                            <p className="text-xs text-muted-foreground">
+                              Diupload:{" "}
+                              {new Date(doc.created_at).toLocaleDateString(
+                                "id-ID",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                }
+                              )}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            handleDownloadDocument(doc.file, doc.type)
+                          }
+                          className="gap-2"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Buka
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                  <p className="text-sm">Tidak ada dokumen yang diupload</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
