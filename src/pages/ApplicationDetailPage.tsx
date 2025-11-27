@@ -208,7 +208,7 @@ export function ApplicationDetailPage() {
               result.message || "Gagal menyetujui pengajuan final"
             );
           }
-        } catch (error) { 
+        } catch (error) {
           showErrorToast("Terjadi kesalahan saat menyetujui pengajuan final");
         } finally {
           setActionLoading(false);
@@ -263,7 +263,15 @@ export function ApplicationDetailPage() {
             <h1 className="text-3xl font-bold tracking-tight">
               Detail Pengajuan
             </h1>
-            <p className="text-muted-foreground">ID: {application.id}</p>
+            <p className="text-muted-foreground">
+              ID:{" "}
+              {application.type === Programs.TRAINING
+                ? "TRAN-"
+                : application.type === Programs.FUNDING
+                  ? "FUND-"
+                  : "CERT-"}{" "}
+              {application.id}
+            </p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => navigate(-1)}>

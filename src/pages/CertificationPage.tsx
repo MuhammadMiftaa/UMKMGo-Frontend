@@ -120,10 +120,11 @@ export function CertificationPage() {
                   </p>
                   <div className="flex items-center gap-4 text-sm">
                     <span>
-                      <strong>Skema:</strong> {application.program?.title}
+                      <strong>Nama Program:</strong>{" "}
+                      {application.program?.title}
                     </span>
                     <span>
-                      <strong>Wilayah:</strong> {application.program?.location}
+                      <strong>Penyedia:</strong> {application.program?.provider}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

@@ -99,6 +99,7 @@ export interface Program {
   title?: string;
   location?: string;
   type?: ApplicationType;
+  provider?: string;
 }
 
 export interface Application {

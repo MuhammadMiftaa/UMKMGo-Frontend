@@ -127,17 +127,11 @@ export function FundingPage() {
                     {application.umkm?.business_name}
                   </p>
                   <div className="flex items-center gap-4 text-sm">
-                    {application.amount && (
-                      <span>
-                        <strong>Nominal:</strong>{" "}
-                        {formatCurrency(application.amount)}
-                      </span>
-                    )}
                     <span>
-                      <strong>Tujuan:</strong> {application.fundingPurpose}
+                      <strong>Nama Program:</strong> {application.program?.title}
                     </span>
                     <span>
-                      <strong>Wilayah:</strong> {application.program?.location}
+                      <strong>Penyedia:</strong> {application.program?.provider}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
