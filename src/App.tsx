@@ -17,6 +17,9 @@ import CreateProgramPage from "./pages/programs/CreateProgramPage";
 import ProgramDetailPage from "./pages/programs/ProgramDetailPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { EditAdminPage } from "./pages/EditAdminPage";
+import { NewsListPage } from "./pages/NewsListPage";
+import { NewsDetailPage } from "./pages/NewsDetailPage";
+import { NewsFormPage } from "./pages/NewsFormPage";
 
 function App() {
   return (
@@ -77,6 +80,10 @@ function App() {
           path="programs/funding/:id/edit"
           element={<CreateProgramPage />}
         />
+        <Route path="news" element={<NewsListPage />} />
+        <Route path="news/:id" element={<NewsDetailPage />} />
+        <Route path="news/create" element={<NewsFormPage />} />
+        <Route path="news/:id/edit" element={<NewsFormPage />} />
       </Route>
     </Routes>
   );

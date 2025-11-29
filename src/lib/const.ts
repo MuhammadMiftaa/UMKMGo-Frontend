@@ -1,4 +1,5 @@
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/v1";
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080/v1";
 
 export const Permissions = {
   SCREENING_TRAINING: "SCREENING_TRAINING",
@@ -17,6 +18,11 @@ export const Permissions = {
   ROLE_PERMISSIONS_MANAGEMENT: "ROLE_PERMISSIONS_MANAGEMENT",
   GENERATE_REPORT: "GENERATE_REPORT",
   SLA_CONFIGURATION: "SLA_CONFIGURATION",
+  MANAGE_NEWS: "MANAGE_NEWS",
+  CREATE_NEWS: "CREATE_NEWS",
+  EDIT_NEWS: "EDIT_NEWS",
+  DELETE_NEWS: "DELETE_NEWS",
+  VIEW_NEWS: "VIEW_NEWS",
 } as const;
 
 export const RoleConstants = {
@@ -109,4 +115,18 @@ export const TrainingTypesMap = {
   online: "Online",
   offline: "Offline",
   hybrid: "Hybrid",
+};
+
+export const NewsCategories = {
+  ANNOUNCEMENT: "announcement",
+  SUCCESS_STORY: "success_story",
+  EVENT: "event",
+  ARTICLE: "article",
+};
+
+export const NewsCategoriesMap = {
+  announcement: "Pengumuman",
+  success_story: "Kisah Sukses",
+  event: "Event",
+  article: "Artikel",
 };

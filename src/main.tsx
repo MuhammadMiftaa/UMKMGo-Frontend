@@ -10,6 +10,7 @@ import "./globals.css";
 import { SettingsProvider } from "./contexts/SettingsContext.tsx";
 import { DashboardProvider } from "./contexts/DashboardContext.tsx";
 import { Toaster } from "react-hot-toast";
+import { NewsProvider } from "./contexts/NewsContext.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -20,8 +21,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <ApplicationsProvider>
               <SettingsProvider>
                 <DashboardProvider>
-                  <App />
-                  <Toaster position="top-right" />
+                  <NewsProvider>
+                    <App />
+                    <Toaster position="top-right" />
+                  </NewsProvider>
                 </DashboardProvider>
               </SettingsProvider>
             </ApplicationsProvider>

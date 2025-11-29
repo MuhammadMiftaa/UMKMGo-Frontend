@@ -10,6 +10,7 @@ import {
   LogOut,
   FolderOpen,
   ChevronDown,
+  Newspaper,
 } from "lucide-react";
 import {
   Sidebar,
@@ -69,6 +70,18 @@ const menuItems = [
         icon: DollarSign,
         permission: [Permissions.MANAGE_FUNDING_PROGRAMS],
       },
+    ],
+  },
+  {
+    title: "Artikel",
+    url: "/news",
+    icon: Newspaper,
+    permission: [
+      Permissions.MANAGE_NEWS,
+      Permissions.VIEW_NEWS,
+      Permissions.CREATE_NEWS,
+      Permissions.EDIT_NEWS,
+      Permissions.DELETE_NEWS,
     ],
   },
   {
