@@ -5,13 +5,14 @@
  */
 
 export const testConfig = {
-  // Base URL untuk testing - menggunakan TEST_BASE_URL dari GitLab CI Variables
-  baseURL: process.env.TEST_BASE_URL || "http://localhost:5173",
+  // Base URL untuk testing - PRIORITAS: PLAYWRIGHT_BASE_URL > TEST_BASE_URL > localhost
+  baseURL: process.env.PLAYWRIGHT_BASE_URL || 
+           process.env.TEST_BASE_URL || 
+           "http://localhost:5173",
 
   // API URL
   apiURL:
-    process.env.VITE_API_URL ||
-    "https://api-umkmgo-staging.miftech.web.id/v1",
+    process.env.VITE_API_URL || "https://api-umkmgo-staging.miftech.web.id/v1",
 
   // Test credentials - menggunakan TEST_EMAIL dan TEST_PASSWORD dari GitLab CI Variables
   credentials: {
