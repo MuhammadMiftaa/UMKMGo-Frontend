@@ -4,10 +4,16 @@ stages:
   - build
   - release
   - deploy
+  - test
 
 variables:
   TAG_IMAGE: $CI_COMMIT_TAG
+  # Playwright version consistency
+  PLAYWRIGHT_VERSION: "v1.57.0-jammy"
 
+# ========================================
+# BUILD STAGE
+# ========================================
 build_client:
   stage: build
   image: docker:latest
@@ -25,23 +31,50 @@ build_client:
   artifacts:
     paths:
       - client_build_job_id.txt
+    expire_in: 1 week
 
-release:
+# ========================================
+# RELEASE STAGE
+# ========================================
+prepare_release:
   stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  image: registry.gitlab.com/gitlab-org/cli:latest
   needs:
     - job: build_client
       artifacts: true
   rules:
     - if: $CI_COMMIT_TAG =~ /^v[0-9]{4}\.[0-9]{1,3}$/
-  variables:
-    RELEASE_TITLE: "Release ${CI_COMMIT_TAG}"
-    RELEASE_DESC: "Tagged after commit ${CI_COMMIT_SHORT_SHA}, message ${CI_COMMIT_TAG_MESSAGE}"
   script:
-    - export CLIENT_BUILD_JOB_ID="$(cat client_build_job_id.txt)"
-    - echo "create release ${CI_COMMIT_TAG} from jobs $CLIENT_BUILD_JOB_ID"
-    - release-cli create --name "${RELEASE_TITLE}" --description "${RELEASE_DESC}" --tag-name "${CI_COMMIT_TAG}"
+    - echo "CLIENT_BUILD_JOB_ID=$(cat client_build_job_id.txt)" >> build.env
+    - echo "Client Job ID:$(cat client_build_job_id.txt)"
+  artifacts:
+    reports:
+      dotenv: build.env
+    expire_in: 1 week
 
+create_release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/cli:latest
+  needs:
+    - job: prepare_release
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]{4}\.[0-9]{1,3}$/
+  script:
+    - echo "Creating release ${CI_COMMIT_TAG}"
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: "Release ${CI_COMMIT_TAG}"
+    description: "Tagged after commit ${CI_COMMIT_SHORT_SHA}, message: ${CI_COMMIT_TAG_MESSAGE}"
+    assets:
+      links:
+        - name: "Client Image Artifacts"
+          url: "${CI_PROJECT_URL}/-/jobs/${CLIENT_BUILD_JOB_ID}/artifacts/download"
+          link_type: package
+
+# ========================================
+# DEPLOY STAGE
+# ========================================
 deploy-staging:
   stage: deploy
   image: alpine:latest
@@ -68,6 +101,9 @@ deploy-staging:
         docker compose -f docker-compose.stg.yml pull umkmgo-staging-frontend &&
         docker compose -f docker-compose.stg.yml --profile frontend up -d --build
       "
+  environment:
+    name: staging
+    url: https://umkmgo-staging.miftech.web.id
 
 deploy-production:
   stage: deploy
@@ -96,3 +132,329 @@ deploy-production:
         docker compose -f docker-compose.prod.yml --profile frontend up -d --build
       "
   when: manual
+  environment:
+    name: production
+    url: https://umkmgo.miftech.web.id
+
+# ========================================
+# TEST STAGE - STAGING
+# ========================================
+test_staging:
+  stage: test
+  image: mcr.microsoft.com/playwright:${PLAYWRIGHT_VERSION}
+  needs:
+    - job: deploy-staging
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]{4}\.[0-9]{1,3}$/
+  variables:
+    TEST_BASE_URL: "https://umkmgo-staging.miftech.web.id"
+    NODE_ENV: "staging"
+  before_script:
+    # Install Bun
+    - curl -fsSL https://bun.sh/install | bash
+    - export PATH="$HOME/.bun/bin:$PATH"
+    - bun --version
+  script: |
+    set -e
+    
+    echo "🚀 Running tests against STAGING environment..."
+    echo "📍 Base URL: $TEST_BASE_URL"
+    
+    # Install dependencies
+    echo "📦 Installing dependencies..."
+    bun install
+    
+    # Install Playwright browsers
+    echo "🌐 Installing Playwright browsers..."
+    bun x playwright install --with-deps
+    
+    # Run ALL tests (staging allows all tests)
+    echo "🧪 Running ALL Playwright tests..."
+    TEST_EXIT_CODE=0
+    bun x playwright test \
+      --reporter=junit \
+      --reporter=html \
+      --reporter=list || TEST_EXIT_CODE=$?
+    
+    echo "📊 Test exit code: $TEST_EXIT_CODE"
+    echo "$TEST_EXIT_CODE" > test-exit-code.txt
+    
+    # Summary
+    if [ $TEST_EXIT_CODE -eq 0 ]; then
+      echo "✅ All staging tests passed!"
+    else
+      echo "❌ Staging tests failed (exit code: $TEST_EXIT_CODE)"
+    fi
+    
+    exit $TEST_EXIT_CODE
+  after_script:
+    - |
+      if [ -f "test-exit-code.txt" ]; then
+        EXIT_CODE=$(cat test-exit-code.txt)
+        if [ "$EXIT_CODE" = "0" ]; then
+          echo "✅ All tests passed!"
+        else
+          echo "❌ Some tests failed (exit code: $EXIT_CODE)"
+        fi
+      fi
+  artifacts:
+    when: always
+    reports:
+      junit: test-results/results.xml
+    paths:
+      - test-results/
+      - playwright-report/
+      - test-exit-code.txt
+    expire_in: 30 days
+  allow_failure: false  # Staging tests MUST pass
+  retry:
+    max: 1
+    when:
+      - script_failure
+
+# ========================================
+# TEST STAGE - PRODUCTION
+# ========================================
+test_production:
+  stage: test
+  image: mcr.microsoft.com/playwright:${PLAYWRIGHT_VERSION}
+  needs:
+    - job: deploy-production
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]{4}\.[0-9]{1,3}$/
+  variables:
+    TEST_BASE_URL: "https://umkmgo.miftech.web.id"
+    NODE_ENV: "production"
+  before_script:
+    # Install Bun
+    - curl -fsSL https://bun.sh/install | bash
+    - export PATH="$HOME/.bun/bin:$PATH"
+    - bun --version
+  script: |
+    set -e
+    
+    echo "🚀 Running tests against PRODUCTION environment..."
+    echo "⚠️  WARNING: Testing on production - using read-only tests only"
+    echo "📍 Base URL: $TEST_BASE_URL"
+    
+    # Install dependencies
+    echo "📦 Installing dependencies..."
+    bun install
+    
+    # Install Playwright browsers
+    echo "🌐 Installing Playwright browsers..."
+    bun x playwright install --with-deps
+    
+    # Run SAFE tests only (exclude destructive operations)
+    echo "🧪 Running READ-ONLY Playwright tests..."
+    TEST_EXIT_CODE=0
+    bun x playwright test \
+      --grep-invert "@destructive|@write|@create|@delete|@update" \
+      --reporter=junit \
+      --reporter=html \
+      --reporter=list || TEST_EXIT_CODE=$?
+    
+    echo "📊 Test exit code: $TEST_EXIT_CODE"
+    echo "$TEST_EXIT_CODE" > test-exit-code.txt
+    
+    # Summary
+    if [ $TEST_EXIT_CODE -eq 0 ]; then
+      echo "✅ All production tests passed!"
+    else
+      echo "❌ Production tests failed (exit code: $TEST_EXIT_CODE)"
+      echo "⚠️  Note: Only read-only tests were executed"
+    fi
+    
+    exit $TEST_EXIT_CODE
+  after_script:
+    - |
+      if [ -f "test-exit-code.txt" ]; then
+        EXIT_CODE=$(cat test-exit-code.txt)
+        if [ "$EXIT_CODE" = "0" ]; then
+          echo "✅ All production tests passed!"
+        else
+          echo "❌ Some production tests failed (exit code: $EXIT_CODE)"
+        fi
+      fi
+  artifacts:
+    when: always
+    reports:
+      junit: test-results/results.xml
+    paths:
+      - test-results/
+      - playwright-report/
+      - test-exit-code.txt
+    expire_in: 30 days
+  allow_failure: true  # Production tests can fail without blocking
+  when: manual
+  retry:
+    max: 1
+    when:
+      - script_failure
+
+# ========================================
+# SMOKE TESTS - PRODUCTION (Quick Check)
+# ========================================
+smoke_test_production:
+  stage: test
+  image: mcr.microsoft.com/playwright:${PLAYWRIGHT_VERSION}
+  needs:
+    - job: deploy-production
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]{4}\.[0-9]{1,3}$/
+  variables:
+    TEST_BASE_URL: "https://umkmgo.miftech.web.id"
+  before_script:
+    - curl -fsSL https://bun.sh/install | bash
+    - export PATH="$HOME/.bun/bin:$PATH"
+  script: |
+    set -e
+    
+    echo "🔥 Running SMOKE tests on production..."
+    echo "📍 Base URL: $TEST_BASE_URL"
+    
+    bun install
+    bun x playwright install --with-deps
+    
+    TEST_EXIT_CODE=0
+    bun x playwright test \
+      --grep "@smoke" \
+      --reporter=list || TEST_EXIT_CODE=$?
+    
+    echo "$TEST_EXIT_CODE" > smoke-test-exit-code.txt
+    
+    if [ $TEST_EXIT_CODE -eq 0 ]; then
+      echo "✅ Smoke tests passed!"
+    else
+      echo "❌ Smoke tests failed!"
+    fi
+    
+    exit $TEST_EXIT_CODE
+  artifacts:
+    when: always
+    paths:
+      - playwright-report/
+      - smoke-test-exit-code.txt
+    expire_in: 7 days
+  allow_failure: false  # Smoke tests MUST pass
+  when: on_success
+
+# ========================================
+# UPDATE RELEASE WITH TEST RESULTS
+# ========================================
+update_release_with_test_results:
+  stage: test
+  image: registry.gitlab.com/gitlab-org/cli:latest
+  needs:
+    - job: create_release
+      artifacts: true
+    - job: test_staging
+      artifacts: true
+      optional: true
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]{4}\.[0-9]{1,3}$/
+  before_script:
+    - apk add --no-cache curl zip jq
+  script:
+    - echo "Packaging test results..."
+    
+    # Create directories if not exist
+    - mkdir -p test-results playwright-report
+    
+    # Check if test results exist
+    - |
+      if [ ! -d "test-results" ] || [ -z "$(ls -A test-results)" ]; then
+        echo "⚠️ No test results found!"
+        echo "No tests were executed or test results are missing." > test-results/README.txt
+      fi
+    
+    # Create zip with error handling
+    - zip -r playwright-test-results.zip test-results/ playwright-report/ test-exit-code.txt 2>/dev/null || echo "⚠️ Some files missing, continuing..."
+    
+    # Upload test results as generic package
+    - |
+      if [ -f "playwright-test-results.zip" ]; then
+        curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+             --upload-file playwright-test-results.zip \
+             "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/tests/${CI_COMMIT_TAG}/playwright-test-results.zip" || echo "⚠️ Upload failed"
+      fi
+    
+    # Upload JUnit report if exists
+    - |
+      if [ -f "test-results/results.xml" ]; then
+        curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+             --upload-file test-results/results.xml \
+             "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/tests/${CI_COMMIT_TAG}/junit-report.xml" || echo "⚠️ JUnit upload failed"
+      else
+        echo "⚠️ JUnit report not found, skipping upload"
+      fi
+    
+    - echo "✅ Test results processing completed"
+    - echo "TEST_JOB_ID=${CI_JOB_ID}" >> release_update.env
+    - echo "TEST_RESULTS_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/tests/${CI_COMMIT_TAG}/playwright-test-results.zip" >> release_update.env
+  artifacts:
+    reports:
+      dotenv: release_update.env
+    paths:
+      - playwright-test-results.zip
+    expire_in: 30 days
+  allow_failure: true
+
+# ========================================
+# ATTACH TEST RESULTS TO RELEASE
+# ========================================
+attach_test_to_release:
+  stage: test
+  image: registry.gitlab.com/gitlab-org/cli:latest
+  needs:
+    - job: update_release_with_test_results
+      artifacts: true
+      optional: true
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]{4}\.[0-9]{1,3}$/
+  before_script:
+    - apk add --no-cache curl jq
+  script:
+    - echo "Updating release with test results..."
+    
+    # Check if files exist
+    - |
+      if [ ! -f "playwright-test-results.zip" ]; then
+        echo "⚠️ Test results zip not found, creating placeholder..."
+        echo "No test results available" > no-results.txt
+        zip playwright-test-results.zip no-results.txt
+      fi
+    
+    # Try to attach via GitLab CLI with better error handling
+    - |
+      glab release upload ${CI_COMMIT_TAG} \
+        playwright-test-results.zip \
+        --name "Playwright Test Results (Staging)" 2>&1 || {
+        echo "⚠️ CLI upload failed, this is expected if using API tokens"
+        echo "Test results are available via package registry"
+      }
+    
+    # Create release notes section
+    - |
+      cat > test_results_section.txt << EOF
+      
+      ## 🧪 Test Results
+      
+      - [Download Test Results (ZIP)](${TEST_RESULTS_URL})
+      - [JUnit Report (XML)](${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/tests/${CI_COMMIT_TAG}/junit-report.xml)
+      - [View in Pipelines](${CI_PROJECT_URL}/-/pipelines/${CI_PIPELINE_ID}/tests)
+      
+      ### Test Summary
+      - **Staging Tests**: Check artifacts for detailed results
+      - **Production Tests**: Manual execution required
+      - **Smoke Tests**: Executed on production deployment
+      
+      EOF
+    
+    - echo "✅ Release notes prepared"
+    - cat test_results_section.txt
+  artifacts:
+    paths:
+      - test_results_section.txt
+    expire_in: 30 days
+  allow_failure: true
