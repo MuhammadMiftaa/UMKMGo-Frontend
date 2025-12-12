@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { testConfig } from "../playwright.config";
 
 test.describe("Error Handling", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/login");
-    await page.getByLabel("Email").fill("superadmin@umkm.go.id");
-    await page.getByLabel("Password").fill("admin123");
+    await page.getByLabel("Email").fill(testConfig.credentials.email);
+    await page.getByLabel("Password").fill(testConfig.credentials.password);
     await page.getByRole("button", { name: "Masuk" }).click();
     await page.waitForURL("/");
   });

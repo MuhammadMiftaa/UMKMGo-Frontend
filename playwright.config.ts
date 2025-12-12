@@ -1,86 +1,177 @@
-/**
- * Test Configuration Helper
- * Centralized configuration untuk Playwright tests
- * Menggunakan environment variables dari GitLab CI atau .env.local untuk development
- */
-
-export const testConfig = {
-  // Base URL untuk testing - PRIORITAS: PLAYWRIGHT_BASE_URL > TEST_BASE_URL > localhost
-  baseURL: process.env.PLAYWRIGHT_BASE_URL || 
-           process.env.TEST_BASE_URL || 
-           "http://localhost:5173",
-
-  // API URL
-  apiURL:
-    process.env.VITE_API_URL || "https://api-umkmgo-staging.miftech.web.id/v1",
-
-  // Test credentials - menggunakan TEST_EMAIL dan TEST_PASSWORD dari GitLab CI Variables
-  credentials: {
-    email: process.env.TEST_EMAIL || "superadmin@umkm.go.id",
-    password: process.env.TEST_PASSWORD || "admin123",
-  },
-
-  // Test timeouts
-  timeouts: {
-    navigation: 30000, // 30 seconds
-    action: 10000, // 10 seconds
-    assertion: 5000, // 5 seconds
-  },
-
-  // Environment detection
-  isCI: !!process.env.CI,
-  isLocal: !process.env.CI,
-
-  // Retry configuration
-  retry: {
-    maxRetries: process.env.CI ? 2 : 0,
-    delay: 1000,
-  },
-};
+import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Helper untuk get environment-specific config
+ * Playwright Configuration untuk GitLab CI/CD
+ * Mendukung staging dan production environment
+ * 
+ * Environment Variables yang digunakan:
+ * - PLAYWRIGHT_BASE_URL / TEST_BASE_URL: Base URL untuk testing
+ * - TEST_EMAIL: Email credentials untuk login
+ * - TEST_PASSWORD: Password credentials untuk login
+ * - CI: Flag untuk CI environment
  */
-export const getEnvironmentConfig = () => {
-  // Deteksi environment berdasarkan TEST_BASE_URL
-  const baseURL = process.env.TEST_BASE_URL || "";
+
+// Helper untuk detect environment
+const getEnvironment = () => {
+  const baseURL = process.env.PLAYWRIGHT_BASE_URL || process.env.TEST_BASE_URL || '';
   
-  if (baseURL.includes("staging")) {
-    return {
-      environment: "staging",
-      baseURL: "https://umkmgo-staging.miftech.web.id",
-      apiURL: "https://api-umkmgo-staging.miftech.web.id/v1",
-    };
-  } else if (baseURL.includes("production") || baseURL.includes("umkmgo.miftech.web.id")) {
-    return {
-      environment: "production",
-      baseURL: "https://umkmgo.miftech.web.id",
-      apiURL: "https://api-umkmgo.miftech.web.id/v1",
-    };
+  if (baseURL.includes('staging')) {
+    return 'staging';
+  } else if (baseURL.includes('umkmgo.miftech.web.id')) {
+    return 'production';
   } else {
-    return {
-      environment: "local",
-      baseURL: "http://localhost:5173",
-      apiURL: "http://localhost:8080/v1",
-    };
+    return 'local';
   }
 };
 
-/**
- * Helper untuk logging (tidak log sensitive data)
- */
-export const logTestConfig = () => {
-  const envConfig = getEnvironmentConfig();
-  
-  console.log("🔧 Test Configuration:");
-  console.log(`   Environment: ${envConfig.environment}`);
-  console.log(`   Base URL: ${testConfig.baseURL}`);
-  console.log(`   API URL: ${testConfig.apiURL}`);
-  console.log(`   Email: ${testConfig.credentials.email}`);
-  console.log(`   Password: ${testConfig.credentials.password ? "***SET***" : "***NOT SET***"}`);
-  console.log(`   Is CI: ${testConfig.isCI}`);
-  console.log(`   Retry: ${testConfig.retry.maxRetries} times`);
-  console.log(`   Browser Projects: chromium, firefox, webkit`);
+// Environment-specific configurations
+const envConfigs = {
+  local: {
+    baseURL: 'http://localhost:5173',
+    apiURL: 'http://localhost:8080/v1',
+  },
+  staging: {
+    baseURL: 'https://umkmgo-staging.miftech.web.id',
+    apiURL: 'https://api-umkmgo-staging.miftech.web.id/v1',
+  },
+  production: {
+    baseURL: 'https://umkmgo.miftech.web.id',
+    apiURL: 'https://api-umkmgo.miftech.web.id/v1',
+  },
 };
 
-export default testConfig;
+const currentEnv = getEnvironment();
+const envConfig = envConfigs[currentEnv as keyof typeof envConfigs] || envConfigs.staging;
+
+// Log configuration (only in CI)
+if (process.env.CI) {
+  console.log('🔧 Playwright Test Configuration:');
+  console.log(`   Environment: ${currentEnv}`);
+  console.log(`   Base URL: ${envConfig.baseURL}`);
+  console.log(`   API URL: ${envConfig.apiURL}`);
+  console.log(`   Test Email: ${process.env.TEST_EMAIL || 'superadmin@umkm.go.id'}`);
+  console.log(`   Password: ${process.env.TEST_PASSWORD ? '***SET***' : '***NOT SET***'}`);
+  console.log(`   Is CI: ${!!process.env.CI}`);
+}
+
+/**
+ * Playwright Configuration
+ * See https://playwright.dev/docs/test-configuration
+ */
+export default defineConfig({
+  testDir: './tests',
+  
+  /* Run tests in files in parallel */
+  fullyParallel: true,
+  
+  /* Fail the build on CI if you accidentally left test.only in the source code */
+  forbidOnly: !!process.env.CI,
+  
+  /* Retry on CI only */
+  retries: process.env.CI ? 2 : 0,
+  
+  /* Opt out of parallel tests on CI */
+  workers: process.env.CI ? 1 : undefined,
+  
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  reporter: [
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['list'],
+    // Uncomment untuk JSON reporter jika diperlukan
+    // ['json', { outputFile: 'test-results/results.json' }]
+  ],
+  
+  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions */
+  use: {
+    /* Base URL to use in actions like `await page.goto('/')` */
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 
+             process.env.TEST_BASE_URL || 
+             envConfig.baseURL,
+    
+    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    trace: 'on-first-retry',
+    
+    /* Screenshot on failure */
+    screenshot: 'only-on-failure',
+    
+    /* Video on failure (only in CI to save artifacts) */
+    video: process.env.CI ? 'retain-on-failure' : 'off',
+    
+    /* Maximum time each action such as `click()` can take */
+    actionTimeout: 10000,
+    
+    /* Maximum time for navigation */
+    navigationTimeout: 30000,
+    
+    /* Ignore HTTPS errors */
+    ignoreHTTPSErrors: true,
+  },
+
+  /* Configure projects for major browsers */
+  projects: [
+    {
+      name: 'chromium',
+      use: { 
+        ...devices['Desktop Chrome'],
+        // Tambahan untuk headless mode di CI
+        launchOptions: {
+          args: process.env.CI ? [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+          ] : [],
+        },
+      },
+    },
+
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+
+    /* Test against mobile viewports. */
+    // {
+    //   name: 'Mobile Chrome',
+    //   use: { ...devices['Pixel 5'] },
+    // },
+    // {
+    //   name: 'Mobile Safari',
+    //   use: { ...devices['iPhone 12'] },
+    // },
+  ],
+
+  /* Run your local dev server before starting the tests (hanya untuk local) */
+  webServer: !process.env.CI ? {
+    command: 'npm run dev',
+    url: 'http://localhost:5173',
+    reuseExistingServer: true,
+    timeout: 120000,
+  } : undefined,
+});
+
+/**
+ * Export helper untuk digunakan di test files jika diperlukan
+ * Cara pakai: import { testConfig } from '../playwright.config'
+ */
+export const testConfig = {
+  baseURL: process.env.PLAYWRIGHT_BASE_URL || 
+           process.env.TEST_BASE_URL || 
+           envConfig.baseURL,
+  apiURL: envConfig.apiURL,
+  credentials: {
+    email: process.env.TEST_EMAIL || 'superadmin@umkm.go.id',
+    password: process.env.TEST_PASSWORD || 'admin123',
+  },
+  timeouts: {
+    navigation: 30000,
+    action: 10000,
+    assertion: 5000,
+  },
+  isCI: !!process.env.CI,
+  environment: currentEnv,
+};

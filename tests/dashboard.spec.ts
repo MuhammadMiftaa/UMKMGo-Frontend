@@ -1,11 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { testConfig } from "../playwright.config";
 
 test.describe("Dashboard Page", () => {
   test.beforeEach(async ({ page }) => {
     // Login dulu
     await page.goto("/login");
-    await page.getByLabel("Email").fill("superadmin@umkm.go.id");
-    await page.getByLabel("Password").fill("admin123");
+    await page.getByLabel("Email").fill(testConfig.credentials.email);
+    await page.getByLabel("Password").fill(testConfig.credentials.password);
     await page.getByRole("button", { name: "Masuk" }).click();
     await page.waitForURL("/");
   });
@@ -27,14 +28,14 @@ test.describe("Dashboard Page", () => {
     await expect(page.getByText("Pengajuan Terbaru")).toBeVisible();
   });
 
-//   TODO: FIXED
-//   test("should navigate to application detail when clicked", async ({
-//     page,
-//   }) => {
-//     const firstApplication = page.locator(".border.rounded-lg").first();
-//     if (await firstApplication.isVisible()) {
-//       await firstApplication.click();
-//       await expect(page).toHaveURL(/\/application\/\d+/);
-//     }
-//   });
+  //   TODO: FIXED
+  //   test("should navigate to application detail when clicked", async ({
+  //     page,
+  //   }) => {
+  //     const firstApplication = page.locator(".border.rounded-lg").first();
+  //     if (await firstApplication.isVisible()) {
+  //       await firstApplication.click();
+  //       await expect(page).toHaveURL(/\/application\/\d+/);
+  //     }
+  //   });
 });
