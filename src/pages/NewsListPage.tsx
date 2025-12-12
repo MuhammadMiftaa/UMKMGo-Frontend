@@ -170,7 +170,10 @@ export function NewsListPage() {
               </div>
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger
+                className="w-[180px]"
+                data-testid="category-filter"
+              >
                 <SelectValue placeholder="Semua Kategori" />
               </SelectTrigger>
               <SelectContent>
@@ -182,7 +185,7 @@ export function NewsListPage() {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px]" data-testid="status-filter">
                 <SelectValue placeholder="Semua Status" />
               </SelectTrigger>
               <SelectContent>
@@ -310,9 +313,7 @@ export function NewsListPage() {
                       </Button>
                     </>
                   )}
-                  {user?.permissions?.includes(
-                    Permissions.DELETE_NEWS
-                  ) && (
+                  {user?.permissions?.includes(Permissions.DELETE_NEWS) && (
                     <Button
                       size="sm"
                       variant="destructive"

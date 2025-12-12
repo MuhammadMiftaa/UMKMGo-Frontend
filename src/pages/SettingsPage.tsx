@@ -331,8 +331,11 @@ export function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Nama</label>
+              <label htmlFor="profile-name" className="text-sm font-medium">
+                Nama
+              </label>
               <Input
+                id="profile-name"
                 value={profileForm.name}
                 onChange={(e) =>
                   setProfileForm({ ...profileForm, name: e.target.value })
@@ -341,8 +344,11 @@ export function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
+              <label htmlFor="profile-email" className="text-sm font-medium">
+                Email
+              </label>
               <Input
+                id="profile-email"
                 value={profileForm.email}
                 onChange={(e) =>
                   setProfileForm({ ...profileForm, email: e.target.value })
@@ -351,8 +357,11 @@ export function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Role</label>
+              <label htmlFor="profile-role" className="text-sm font-medium">
+                Role
+              </label>
               <Input
+                id="profile-role"
                 value={user?.role_name?.replace("_", " ").toUpperCase()}
                 disabled
               />
@@ -389,10 +398,14 @@ export function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-2">
                 <div className="flex-1 space-y-2">
-                  <label className="text-sm font-medium">
+                  <label
+                    htmlFor="screening-sla"
+                    className="text-sm font-medium"
+                  >
                     Screening (hari)
                   </label>
                   <Input
+                    id="screening-sla"
                     type="number"
                     value={screeningSLADays}
                     onChange={(e) =>
@@ -413,8 +426,11 @@ export function SettingsPage() {
 
               <div className="flex items-center gap-2">
                 <div className="flex-1 space-y-2">
-                  <label className="text-sm font-medium">Final (hari)</label>
+                  <label htmlFor="final-sla" className="text-sm font-medium">
+                    Final (hari)
+                  </label>
                   <Input
+                    id="final-sla"
                     type="number"
                     value={finalSLADays}
                     onChange={(e) =>

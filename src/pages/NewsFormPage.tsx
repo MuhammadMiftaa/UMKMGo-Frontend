@@ -22,11 +22,7 @@ import {
 } from "../components/ui/select";
 import { Switch } from "../components/ui/switch";
 import { ArrowLeft, Upload, X } from "lucide-react";
-import {
-  CreateNewsData,
-  NewsCategory,
-  useNews,
-} from "../contexts/NewsContext";
+import { CreateNewsData, NewsCategory, useNews } from "../contexts/NewsContext";
 import { NewsCategories } from "../lib/const";
 import { fileToBase64, isImageFile, validateImageSize } from "../lib/utils";
 import {
@@ -85,7 +81,8 @@ export function NewsFormPage() {
         excerpt: currentNews.excerpt || "",
         content: currentNews.content || "",
         thumbnail: currentNews.thumbnail || "",
-        category: currentNews.category || (NewsCategories.ANNOUNCEMENT as NewsCategory),
+        category:
+          currentNews.category || (NewsCategories.ANNOUNCEMENT as NewsCategory),
         is_published: currentNews.is_published ?? false,
         tags: currentNews.tags || [],
       });
@@ -152,7 +149,7 @@ export function NewsFormPage() {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = formData.content.substring(start, end);
-    
+
     let insertion = "";
     switch (tag) {
       case "h2":
@@ -185,7 +182,7 @@ export function NewsFormPage() {
       formData.content.substring(0, start) +
       insertion +
       formData.content.substring(end);
-    
+
     handleInputChange("content", newContent);
 
     // Set cursor position
@@ -222,9 +219,7 @@ export function NewsFormPage() {
 
       if (result.success) {
         showSuccessToast(
-          isEditMode
-            ? "Berita berhasil diperbarui!"
-            : "Berita berhasil dibuat!"
+          isEditMode ? "Berita berhasil diperbarui!" : "Berita berhasil dibuat!"
         );
         navigate("/news");
       } else {
@@ -271,11 +266,7 @@ export function NewsFormPage() {
               : "Tambahkan berita baru untuk UMKM"}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate("/news")}
-        >
+        <Button variant="outline" size="sm" onClick={() => navigate("/news")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Kembali
         </Button>
@@ -313,7 +304,7 @@ export function NewsFormPage() {
                     handleInputChange("category", value)
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger data-testid="category-select">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -323,9 +314,7 @@ export function NewsFormPage() {
                     <SelectItem value={NewsCategories.SUCCESS_STORY}>
                       Kisah Sukses
                     </SelectItem>
-                    <SelectItem value={NewsCategories.EVENT}>
-                      Event
-                    </SelectItem>
+                    <SelectItem value={NewsCategories.EVENT}>Event</SelectItem>
                     <SelectItem value={NewsCategories.ARTICLE}>
                       Artikel
                     </SelectItem>
@@ -339,9 +328,7 @@ export function NewsFormPage() {
               <Textarea
                 id="excerpt"
                 value={formData.excerpt}
-                onChange={(e) =>
-                  handleInputChange("excerpt", e.target.value)
-                }
+                onChange={(e) => handleInputChange("excerpt", e.target.value)}
                 placeholder="Masukkan ringkasan berita (maks. 200 karakter)"
                 rows={3}
                 maxLength={200}
@@ -396,7 +383,10 @@ export function NewsFormPage() {
                   <div className="text-center">
                     <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
                     <div className="mt-4">
-                      <Label htmlFor="thumbnail-upload" className="cursor-pointer">
+                      <Label
+                        htmlFor="thumbnail-upload"
+                        className="cursor-pointer"
+                      >
                         <span className="text-sm text-muted-foreground">
                           {isUploading
                             ? "Mengupload..."
@@ -504,8 +494,8 @@ export function NewsFormPage() {
               required
             />
             <p className="text-xs text-muted-foreground">
-              Gunakan HTML tags untuk formatting. Contoh: &lt;h2&gt;,
-              &lt;p&gt;, &lt;strong&gt;, &lt;ul&gt;, dll.
+              Gunakan HTML tags untuk formatting. Contoh: &lt;h2&gt;, &lt;p&gt;,
+              &lt;strong&gt;, &lt;ul&gt;, dll.
             </p>
           </CardContent>
         </Card>
@@ -527,11 +517,7 @@ export function NewsFormPage() {
                 }}
                 placeholder="Masukkan tag dan tekan Enter"
               />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleAddTag}
-              >
+              <Button type="button" variant="outline" onClick={handleAddTag}>
                 Tambah
               </Button>
             </div>
