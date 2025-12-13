@@ -128,6 +128,7 @@ test-staging:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  when: manual
 
 test-production:
   stage: test

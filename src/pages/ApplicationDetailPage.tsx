@@ -66,10 +66,6 @@ export function ApplicationDetailPage() {
     }
   }, [id]);
 
-  if (!application && !isLoading) {
-    return <Navigate to="/" replace />;
-  }
-
   if (isLoading || !application) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -283,7 +279,7 @@ export function ApplicationDetailPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-3xl font-bold tracking-tight" data-testid="application-detail-title">
               Detail Pengajuan
             </h1>
             <p className="text-muted-foreground">
