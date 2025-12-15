@@ -13,21 +13,21 @@ test.describe("Responsive Design", () => {
   test("should work on mobile viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await expect(
-      page.getByRole("heading", { name: "Dashboard" })
+      page.getByRole("heading", { name: "Dashboard", exact: true })
     ).toBeVisible();
   });
 
   test("should work on tablet viewport", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await expect(
-      page.getByRole("heading", { name: "Dashboard" })
+      page.getByRole("heading", { name: "Dashboard", exact: true })
     ).toBeVisible();
   });
 
   test("should work on desktop viewport", async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
     await expect(
-      page.getByRole("heading", { name: "Dashboard" })
+      page.getByRole("heading", { name: "Dashboard", exact: true })
     ).toBeVisible();
   });
 });

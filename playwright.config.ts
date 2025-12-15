@@ -92,10 +92,10 @@ export default defineConfig({
     trace: 'on-first-retry',
     
     /* Screenshot on failure */
-    screenshot: 'only-on-failure',
+    screenshot: 'on',
     
     /* Video on failure (only in CI to save artifacts) */
-    video: process.env.CI ? 'retain-on-failure' : 'off',
+    video:'on',
     
     /* Maximum time each action such as `click()` can take */
     actionTimeout: 10000,

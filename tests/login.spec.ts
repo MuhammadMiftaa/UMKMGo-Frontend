@@ -64,6 +64,43 @@ test.describe("Login Page", () => {
     await expect(page).toHaveURL(/.*login/);
   });
 
+  test("should display error message in Indonesian language", async ({
+    page,
+  }) => {
+    // Test dengan berbagai kombinasi email dan password yang salah
+    const invalidCredentials = [
+      { email: "salah@email.com", password: "passwordsalah" },
+      { email: "invalid@test.com", password: "wrongpass123" },
+      { email: "notexist@umkm.go.id", password: "12345678" },
+    ];
+
+    for (const cred of invalidCredentials) {
+      await page.getByLabel("Email").fill(cred.email);
+      await page.getByLabel("Password").fill(cred.password);
+      await page.getByRole("button", { name: "Masuk" }).click();
+
+      // Tunggu error message muncul
+      const errorMessage = page.getByText("Email atau password salah");
+      await expect(errorMessage).toBeVisible();
+
+      // Pastikan error message dalam bahasa Indonesia (bukan bahasa Inggris)
+      await expect(errorMessage).toHaveText("Email atau password salah");
+
+      // Pastikan tidak ada error message dalam bahasa Inggris
+      await expect(
+        page.getByText("Invalid email or password")
+      ).not.toBeVisible();
+      await expect(page.getByText("Incorrect credentials")).not.toBeVisible();
+      await expect(page.getByText("Wrong email or password")).not.toBeVisible();
+
+      // Pastikan masih di halaman login
+      await expect(page).toHaveURL(/.*login/);
+
+      // Reload halaman untuk test berikutnya
+      await page.reload();
+    }
+  });
+
   test("should show loading state when submitting", async ({ page }) => {
     await page.getByLabel("Email").fill("test@email.com");
     await page.getByLabel("Password").fill("password123");
