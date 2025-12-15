@@ -36,6 +36,7 @@ import {
   showErrorToast,
   showWarningToast,
 } from "../../lib/toast";
+import { convertEmptyToNull } from "../../lib/utils";
 
 export default function CreateProgramPage() {
   const { id } = useParams();
@@ -231,14 +232,25 @@ export default function CreateProgramPage() {
       return;
     }
 
+    const processedData = convertEmptyToNull(formData, {
+      numberFields: [
+        "batch",
+        "min_amount",
+        "max_amount",
+        "interest_rate",
+        "max_tenure_months",
+      ],
+      stringFields: ["batch_start_date", "batch_end_date"],
+    });
+
     let result;
     setIsUploading(true);
 
     try {
       if (isEditMode && id) {
-        result = await updateProgram(Number(id), formData);
+        result = await updateProgram(Number(id), processedData);
       } else {
-        result = await createProgram(formData);
+        result = await createProgram(processedData);
       }
 
       if (result.success) {

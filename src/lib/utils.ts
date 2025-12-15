@@ -1,5 +1,5 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 /**
  * ~ Utility function to merge class names
@@ -7,7 +7,7 @@ import { twMerge } from "tailwind-merge"
  * @returns Merged class name string
  */
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 /**
@@ -18,19 +18,19 @@ export function cn(...inputs: ClassValue[]) {
 export const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    
+
     reader.onload = () => {
-      if (typeof reader.result === 'string') {
+      if (typeof reader.result === "string") {
         resolve(reader.result);
       } else {
-        reject(new Error('Failed to convert file to base64'));
+        reject(new Error("Failed to convert file to base64"));
       }
     };
-    
+
     reader.onerror = () => {
-      reject(new Error('Error reading file'));
+      reject(new Error("Error reading file"));
     };
-    
+
     reader.readAsDataURL(file);
   });
 };
@@ -43,21 +43,21 @@ export const fileToBase64 = (file: File): Promise<string> => {
 export const fileToBase64Pure = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    
+
     reader.onload = () => {
-      if (typeof reader.result === 'string') {
+      if (typeof reader.result === "string") {
         // Remove data URI prefix (e.g., "data:image/png;base64,")
-        const base64 = reader.result.split(',')[1];
+        const base64 = reader.result.split(",")[1];
         resolve(base64);
       } else {
-        reject(new Error('Failed to convert file to base64'));
+        reject(new Error("Failed to convert file to base64"));
       }
     };
-    
+
     reader.onerror = () => {
-      reject(new Error('Error reading file'));
+      reject(new Error("Error reading file"));
     };
-    
+
     reader.readAsDataURL(file);
   });
 };
@@ -68,7 +68,7 @@ export const fileToBase64Pure = (file: File): Promise<string> => {
  * @returns boolean
  */
 export const isImageFile = (file: File): boolean => {
-  return file.type.startsWith('image/');
+  return file.type.startsWith("image/");
 };
 
 /**
@@ -77,7 +77,46 @@ export const isImageFile = (file: File): boolean => {
  * @param maxSizeInMB - Maximum file size in megabytes
  * @returns boolean
  */
-export const validateImageSize = (file: File, maxSizeInMB: number = 5): boolean => {
+export const validateImageSize = (
+  file: File,
+  maxSizeInMB: number = 5
+): boolean => {
   const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
   return file.size <= maxSizeInBytes;
+};
+
+/**
+ * Converts empty values to null for API submission
+ */
+export const convertEmptyToNull = <T extends Record<string, any>>(
+  data: T,
+  fieldsConfig?: {
+    stringFields?: (keyof T)[];
+    numberFields?: (keyof T)[];
+    arrayFields?: (keyof T)[];
+  }
+): T => {
+  const result = { ...data };
+
+  Object.keys(result).forEach((key) => {
+    const k = key as keyof T;
+    const value = result[k];
+
+    // Convert empty strings to null
+    if (typeof value === "string" && value.trim() === "") {
+      (result as Record<string, any>)[key] = null;
+    }
+
+    // Convert 0 to null for number fields (if specified)
+    if (fieldsConfig?.numberFields?.includes(k) && value === 0) {
+      (result as Record<string, any>)[key] = null;
+    }
+
+    // Convert empty arrays to null
+    if (Array.isArray(value) && value.length === 0) {
+      (result as Record<string, any>)[key] = null;
+    }
+  });
+
+  return result;
 };
