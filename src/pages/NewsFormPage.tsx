@@ -219,22 +219,24 @@ export function NewsFormPage() {
 
       if (result.success) {
         showSuccessToast(
-          isEditMode ? "Berita berhasil diperbarui!" : "Berita berhasil dibuat!"
+          isEditMode
+            ? "artikel berhasil diperbarui!"
+            : "artikel berhasil dibuat!"
         );
         navigate("/news");
       } else {
         showErrorToast(
           result.message ||
-            `Gagal ${isEditMode ? "memperbarui" : "membuat"} berita`
+            `Gagal ${isEditMode ? "memperbarui" : "membuat"} artikel`
         );
         setError(
           result.message ||
-            `Gagal ${isEditMode ? "memperbarui" : "membuat"} berita`
+            `Gagal ${isEditMode ? "memperbarui" : "membuat"} artikel`
         );
       }
     } catch (error) {
       showErrorToast(
-        `Terjadi kesalahan saat ${isEditMode ? "memperbarui" : "membuat"} berita`
+        `Terjadi kesalahan saat ${isEditMode ? "memperbarui" : "membuat"} artikel`
       );
       setError("Terjadi kesalahan yang tidak terduga");
     } finally {
@@ -247,7 +249,7 @@ export function NewsFormPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-          <p className="text-muted-foreground">Memuat data berita...</p>
+          <p className="text-muted-foreground">Memuat data artikel...</p>
         </div>
       </div>
     );
@@ -258,12 +260,12 @@ export function NewsFormPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            {isEditMode ? "Edit" : "Buat"} Berita
+            {isEditMode ? "Edit" : "Buat"} artikel
           </h1>
           <p className="text-muted-foreground">
             {isEditMode
-              ? "Perbarui informasi berita"
-              : "Tambahkan berita baru untuk UMKM"}
+              ? "Perbarui informasi artikel"
+              : "Tambahkan artikel baru untuk UMKM"}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => navigate("/news")}>
@@ -287,12 +289,12 @@ export function NewsFormPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Judul Berita *</Label>
+                <Label htmlFor="title">Judul artikel *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => handleInputChange("title", e.target.value)}
-                  placeholder="Masukkan judul berita"
+                  placeholder="Masukkan judul artikel"
                   required
                 />
               </div>
@@ -329,7 +331,7 @@ export function NewsFormPage() {
                 id="excerpt"
                 value={formData.excerpt}
                 onChange={(e) => handleInputChange("excerpt", e.target.value)}
-                placeholder="Masukkan ringkasan berita (maks. 200 karakter)"
+                placeholder="Masukkan ringkasan artikel (maks. 200 karakter)"
                 rows={3}
                 maxLength={200}
                 required
@@ -414,7 +416,7 @@ export function NewsFormPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Konten Berita *</CardTitle>
+            <CardTitle>Konten artikel *</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-2 p-2 bg-muted rounded-lg">
@@ -488,7 +490,7 @@ export function NewsFormPage() {
               ref={contentRef}
               value={formData.content}
               onChange={(e) => handleInputChange("content", e.target.value)}
-              placeholder="Tulis konten berita dengan HTML..."
+              placeholder="Tulis konten artikel dengan HTML..."
               rows={20}
               className="font-mono text-sm"
               required
@@ -559,8 +561,8 @@ export function NewsFormPage() {
                 ? "Memperbarui..."
                 : "Membuat..."
               : isEditMode
-                ? "Perbarui Berita"
-                : "Buat Berita"}
+                ? "Perbarui artikel"
+                : "Buat artikel"}
           </Button>
         </div>
       </form>

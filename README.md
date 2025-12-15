@@ -1879,12 +1879,12 @@ useEffect(() => {
 #### NewsListPage (`src/pages/NewsListPage.tsx`)
 
 **Deskripsi:**
-Halaman untuk menampilkan dan mengelola daftar berita. Admin dapat membuat, edit, delete, dan toggle publish status berita. Halaman ini menggunakan grid card layout untuk display berita.
+Halaman untuk menampilkan dan mengelola daftar artikel. Admin dapat membuat, edit, delete, dan toggle publish status artikel. Halaman ini menggunakan grid card layout untuk display artikel.
 
 **Fungsi Utama:**
 
 - Display grid of news articles
-- Search berita berdasarkan judul/excerpt
+- Search artikel berdasarkan judul/excerpt
 - Filter berdasarkan kategori (announcement, success_story, event, article)
 - Filter berdasarkan status publikasi (published/draft)
 - Create new news
@@ -1903,7 +1903,7 @@ if (!user?.permissions?.includes(Permissions.VIEW_NEWS)) {
 // Create button
 {user?.permissions?.includes(Permissions.CREATE_NEWS) && (
   <Button onClick={() => navigate("/news/create")}>
-    <Plus /> Buat Berita
+    <Plus /> Buat artikel
   </Button>
 )}
 
@@ -1946,7 +1946,7 @@ const filteredNews = newsList.filter((news) => {
     <div className="flex gap-4">
       {/* Search */}
       <Input
-        placeholder="Cari judul atau isi berita..."
+        placeholder="Cari judul atau isi artikel..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
@@ -2084,7 +2084,7 @@ const stripHtml = (html: string, maxLength: number = 150) => {
 ```typescript
 const handleDelete = async (id: number, title: string) => {
   showConfirmAlert({
-    message: `Apakah Anda yakin ingin menghapus berita "${title}"?`,
+    message: `Apakah Anda yakin ingin menghapus artikel "${title}"?`,
     confirmText: "Ya, Hapus",
     onConfirm: async () => {
       setActionLoading(id);
@@ -2092,7 +2092,7 @@ const handleDelete = async (id: number, title: string) => {
       const result = await deleteNews(id);
 
       if (result.success) {
-        showSuccessToast("Berita berhasil dihapus");
+        showSuccessToast("artikel berhasil dihapus");
       } else {
         showErrorToast(result.message);
       }
@@ -2114,7 +2114,7 @@ const handleTogglePublish = async (
   const action = isPublished ? "membatalkan publikasi" : "mempublikasikan";
 
   showConfirmAlert({
-    message: `Apakah Anda yakin ingin ${action} berita "${title}"?`,
+    message: `Apakah Anda yakin ingin ${action} artikel "${title}"?`,
     confirmText: `Ya, ${isPublished ? "Batalkan" : "Publikasikan"}`,
     onConfirm: async () => {
       setActionLoading(id);
@@ -2125,7 +2125,7 @@ const handleTogglePublish = async (
 
       if (result.success) {
         showSuccessToast(
-          `Berita berhasil ${isPublished ? "dibatalkan publikasinya" : "dipublikasikan"}`
+          `artikel berhasil ${isPublished ? "dibatalkan publikasinya" : "dipublikasikan"}`
         );
       }
 
@@ -2163,7 +2163,7 @@ const handleTogglePublish = async (
 ```typescript
 <Card>
   <CardContent>
-    <p>Tidak ada berita yang ditemukan.</p>
+    <p>Tidak ada artikel yang ditemukan.</p>
   </CardContent>
 </Card>
 ```
@@ -2181,7 +2181,7 @@ const handleTogglePublish = async (
 #### NewsDetailPage (`src/pages/NewsDetailPage.tsx`)
 
 **Deskripsi:**
-Halaman untuk menampilkan detail lengkap dari sebuah berita. Menampilkan thumbnail, content, tags, dan menyediakan action untuk edit, delete, dan toggle publish status.
+Halaman untuk menampilkan detail lengkap dari sebuah artikel. Menampilkan thumbnail, content, tags, dan menyediakan action untuk edit, delete, dan toggle publish status.
 
 **Fungsi Utama:**
 
@@ -2201,7 +2201,7 @@ Halaman untuk menampilkan detail lengkap dari sebuah berita. Menampilkan thumbna
 <div className="flex items-center justify-between">
   <div>
     <h1>{news.title}</h1>
-    <p>Detail Berita</p>
+    <p>Detail artikel</p>
   </div>
   <div className="flex gap-2">
     <Button onClick={() => navigate("/news")}>
@@ -2307,8 +2307,8 @@ a. **Status Publikasi:**
     </div>
     <p className="text-sm text-muted-foreground">
       {isPublished
-        ? "Berita ini sudah dipublikasikan..."
-        : "Berita ini masih dalam status draft..."}
+        ? "artikel ini sudah dipublikasikan..."
+        : "artikel ini masih dalam status draft..."}
     </p>
   </CardContent>
 </Card>
@@ -2367,7 +2367,7 @@ b. **Informasi:**
 ```typescript
 const handleDelete = () => {
   showConfirmAlert({
-    message: `Apakah Anda yakin ingin menghapus berita "${news?.title}"?`,
+    message: `Apakah Anda yakin ingin menghapus artikel "${news?.title}"?`,
     confirmText: "Ya, Hapus",
     onConfirm: async () => {
       setActionLoading(true);
@@ -2375,7 +2375,7 @@ const handleDelete = () => {
       const result = await deleteNews(Number(id));
 
       if (result.success) {
-        showSuccessToast("Berita berhasil dihapus");
+        showSuccessToast("artikel berhasil dihapus");
         setTimeout(() => {
           navigate("/news");
         }, 1500);
@@ -2396,7 +2396,7 @@ const handleTogglePublish = (checked: boolean) => {
   const action = checked ? "mempublikasikan" : "membatalkan publikasi";
 
   showConfirmAlert({
-    message: `Apakah Anda yakin ingin ${action} berita ini?`,
+    message: `Apakah Anda yakin ingin ${action} artikel ini?`,
     confirmText: `Ya, ${checked ? "Publikasikan" : "Batalkan"}`,
     onConfirm: async () => {
       setActionLoading(true);
@@ -2408,7 +2408,7 @@ const handleTogglePublish = (checked: boolean) => {
       if (result.success) {
         setIsPublished(checked);
         showSuccessToast(
-          `Berita berhasil ${checked ? "dipublikasikan" : "dibatalkan publikasinya"}`
+          `artikel berhasil ${checked ? "dipublikasikan" : "dibatalkan publikasinya"}`
         );
       }
 
@@ -2426,7 +2426,7 @@ if (isLoading) {
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center space-y-4">
         <Spinner />
-        <p>Memuat detail berita...</p>
+        <p>Memuat detail artikel...</p>
       </div>
     </div>
   );
@@ -2440,14 +2440,14 @@ if (!news && !isLoading) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1>Berita Tidak Ditemukan</h1>
+        <h1>artikel Tidak Ditemukan</h1>
         <Button onClick={() => navigate("/news")}>
           <ArrowLeft /> Kembali
         </Button>
       </div>
       <Card>
         <CardContent>
-          <p>Berita yang Anda cari tidak ada.</p>
+          <p>artikel yang Anda cari tidak ada.</p>
         </CardContent>
       </Card>
     </div>
@@ -2469,7 +2469,7 @@ new Date(news.created_at).toLocaleDateString("id-ID", {
 #### NewsFormPage (`src/pages/NewsFormPage.tsx`)
 
 **Deskripsi:**
-Halaman form untuk membuat berita baru atau mengedit berita yang sudah ada. Form ini menyediakan rich text editor sederhana dengan HTML formatting, image upload untuk thumbnail, dan tag management.
+Halaman form untuk membuat artikel baru atau mengedit artikel yang sudah ada. Form ini menyediakan rich text editor sederhana dengan HTML formatting, image upload untuk thumbnail, dan tag management.
 
 **Fungsi Utama:**
 
@@ -2500,7 +2500,7 @@ Halaman form untuk membuat berita baru atau mengedit berita yang sudah ada. Form
 
 ```typescript
 interface CreateNewsData {
-  title: string; // Judul berita (required)
+  title: string; // Judul artikel (required)
   excerpt: string; // Ringkasan max 200 chars (required)
   content: string; // Konten HTML (required)
   thumbnail: string; // Base64 image (required)
@@ -2519,11 +2519,11 @@ interface CreateNewsData {
   <CardHeader><CardTitle>Informasi Dasar</CardTitle></CardHeader>
   <CardContent>
     {/* Title */}
-    <Label>Judul Berita *</Label>
+    <Label>Judul artikel *</Label>
     <Input
       value={formData.title}
       onChange={(e) => handleInputChange("title", e.target.value)}
-      placeholder="Masukkan judul berita"
+      placeholder="Masukkan judul artikel"
       required
     />
 
@@ -2552,7 +2552,7 @@ interface CreateNewsData {
     <Textarea
       value={formData.excerpt}
       onChange={(e) => handleInputChange("excerpt", e.target.value)}
-      placeholder="Masukkan ringkasan berita (maks. 200 karakter)"
+      placeholder="Masukkan ringkasan artikel (maks. 200 karakter)"
       rows={3}
       maxLength={200}
       required
@@ -2662,7 +2662,7 @@ const handleFileUpload = async (file: File) => {
 };
 ```
 
-**c. Konten Berita Card:**
+**c. Konten artikel Card:**
 
 **HTML Formatting Toolbar:**
 
@@ -2757,7 +2757,7 @@ const insertHtmlTag = (tag: string) => {
   ref={contentRef}
   value={formData.content}
   onChange={(e) => handleInputChange("content", e.target.value)}
-  placeholder="Tulis konten berita dengan HTML..."
+  placeholder="Tulis konten artikel dengan HTML..."
   rows={20}
   className="font-mono text-sm"
   required
@@ -2867,7 +2867,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     if (result.success) {
       showSuccessToast(
-        isEditMode ? "Berita berhasil diperbarui!" : "Berita berhasil dibuat!"
+        isEditMode ? "artikel berhasil diperbarui!" : "artikel berhasil dibuat!"
       );
       navigate("/news");
     } else {
@@ -2898,7 +2898,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   <Button type="submit" disabled={isLoading || isUploading}>
     {isLoading
       ? isEditMode ? "Memperbarui..." : "Membuat..."
-      : isEditMode ? "Perbarui Berita" : "Buat Berita"}
+      : isEditMode ? "Perbarui artikel" : "Buat artikel"}
   </Button>
 </div>
 ```
@@ -2906,7 +2906,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 **Loading States:**
 
 1. **Initial Load (Edit Mode):**
-   - Spinner + "Memuat data berita..."
+   - Spinner + "Memuat data artikel..."
 
 2. **Upload State:**
    - `isUploading`: true
@@ -6384,7 +6384,7 @@ const { user } = useAuth()
 {user?.permissions?.includes(Permissions.CREATE_NEWS) && (
   <Button onClick={() => navigate('/news/create')}>
     <Plus className="h-4 w-4 mr-2" />
-    Buat Berita
+    Buat artikel
   </Button>
 )}
 ```
@@ -6402,7 +6402,7 @@ Permissions.ROLE_PERMISSIONS_MANAGEMENT;
 **File:** `src/contexts/NewsContext.tsx`
 
 **Deskripsi:**
-Service untuk mengelola operasi CRUD pada berita/artikel yang ditampilkan di aplikasi mobile.
+Service untuk mengelola operasi CRUD pada artikel/artikel yang ditampilkan di aplikasi mobile.
 
 **Implementasi:**
 
@@ -6479,7 +6479,7 @@ const createNews = async (
 
     return {
       success: true,
-      message: response.message || "Berita berhasil dibuat",
+      message: response.message || "artikel berhasil dibuat",
     };
   } catch (err) {
     const errorMessage =
@@ -6518,7 +6518,7 @@ const updateNews = async (
 
     return {
       success: true,
-      message: response.message || "Berita berhasil diperbarui",
+      message: response.message || "artikel berhasil diperbarui",
     };
   } catch (err) {
     const errorMessage =
@@ -6555,7 +6555,7 @@ const deleteNews = async (
 
     return {
       success: true,
-      message: response.message || "Berita berhasil dihapus",
+      message: response.message || "artikel berhasil dihapus",
     };
   } catch (err) {
     const errorMessage =
@@ -6578,7 +6578,7 @@ const deleteNews = async (
 - **Rich Content**: Support HTML content dengan WYSIWYG editor
 - **Image Upload**: Base64 image upload untuk thumbnail
 - **Tags Support**: Multiple tags untuk kategorisasi
-- **Category System**: Kategorisasi berita (announcement, success_story, event, article)
+- **Category System**: Kategorisasi artikel (announcement, success_story, event, article)
 - **Auto Refresh**: Refresh list setelah create/update/delete
 
 **Data Structures:**
@@ -6711,9 +6711,9 @@ const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   const result = await createNews({
-    title: "Judul Berita",
-    excerpt: "Ringkasan berita...",
-    content: "<p>Isi berita lengkap...</p>",
+    title: "Judul artikel",
+    excerpt: "Ringkasan artikel...",
+    content: "<p>Isi artikel lengkap...</p>",
     thumbnail: base64Image,
     category: "announcement",
     is_published: false,
@@ -6721,7 +6721,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   });
 
   if (result.success) {
-    showSuccessToast("Berita berhasil dibuat!");
+    showSuccessToast("artikel berhasil dibuat!");
     navigate("/news");
   }
 };
@@ -6729,11 +6729,11 @@ const handleSubmit = async (e: React.FormEvent) => {
 // Delete with confirmation
 const handleDelete = async (newsId: number, newsTitle: string) => {
   showConfirmAlert({
-    message: `Apakah Anda yakin ingin menghapus berita "${newsTitle}"?`,
+    message: `Apakah Anda yakin ingin menghapus artikel "${newsTitle}"?`,
     onConfirm: async () => {
       const result = await deleteNews(newsId);
       if (result.success) {
-        showSuccessToast("Berita berhasil dihapus");
+        showSuccessToast("artikel berhasil dihapus");
       }
     },
   });
@@ -6760,7 +6760,7 @@ Permissions.DELETE_NEWS; // Delete news
 **File:** `src/contexts/NewsContext.tsx`
 
 **Deskripsi:**
-Service untuk mengontrol status publikasi berita (draft atau published).
+Service untuk mengontrol status publikasi artikel (draft atau published).
 
 **Implementasi:**
 
@@ -6786,7 +6786,7 @@ const publishNews = async (
 
     return {
       success: true,
-      message: response.message || "Berita berhasil dipublikasikan",
+      message: response.message || "artikel berhasil dipublikasikan",
     };
   } catch (err) {
     const errorMessage =
@@ -6825,7 +6825,7 @@ const unpublishNews = async (
 
     return {
       success: true,
-      message: response.message || "Berita berhasil dibatalkan publikasinya",
+      message: response.message || "artikel berhasil dibatalkan publikasinya",
     };
   } catch (err) {
     const errorMessage =
@@ -6844,7 +6844,7 @@ const unpublishNews = async (
 
 **Fitur:**
 
-- **Publication Control**: Control visibility berita di mobile app
+- **Publication Control**: Control visibility artikel di mobile app
 - **Draft Mode**: Save sebagai draft sebelum publish
 - **Optimistic Update**: Update local state untuk fast UI
 - **Toggle Functionality**: Easy toggle antara published dan draft
@@ -6873,7 +6873,7 @@ const handleTogglePublish = (checked: boolean) => {
   const action = checked ? "mempublikasikan" : "membatalkan publikasi";
 
   showConfirmAlert({
-    message: `Apakah Anda yakin ingin ${action} berita ini?`,
+    message: `Apakah Anda yakin ingin ${action} artikel ini?`,
     confirmText: `Ya, ${checked ? "Publikasikan" : "Batalkan"}`,
     cancelText: "Batal",
     onConfirm: async () => {
@@ -6886,7 +6886,7 @@ const handleTogglePublish = (checked: boolean) => {
       if (result.success) {
         setIsPublished(checked);
         showSuccessToast(
-          `Berita berhasil ${checked ? "dipublikasikan" : "dibatalkan publikasinya"}`
+          `artikel berhasil ${checked ? "dipublikasikan" : "dibatalkan publikasinya"}`
         );
       } else {
         showErrorToast(result.message);
@@ -6917,8 +6917,8 @@ const handleTogglePublish = (checked: boolean) => {
     </div>
     <p className="text-sm text-muted-foreground">
       {isPublished
-        ? 'Berita ini sudah dipublikasikan dan dapat dilihat oleh publik.'
-        : 'Berita ini masih dalam status draft dan belum dipublikasikan.'}
+        ? 'artikel ini sudah dipublikasikan dan dapat dilihat oleh publik.'
+        : 'artikel ini masih dalam status draft dan belum dipublikasikan.'}
     </p>
   </CardContent>
 </Card>

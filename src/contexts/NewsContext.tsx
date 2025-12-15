@@ -10,7 +10,11 @@ import { startProgress, stopProgress } from "../lib/nprogress";
 // TYPES
 // ============================================
 
-export type NewsCategory = "announcement" | "success_story" | "event" | "article";
+export type NewsCategory =
+  | "announcement"
+  | "success_story"
+  | "event"
+  | "article";
 
 export interface News {
   id: number;
@@ -57,11 +61,18 @@ interface NewsContextType {
   // CRUD Operations
   getAllNews: () => Promise<void>;
   getNewsById: (id: number) => Promise<void>;
-  createNews: (data: CreateNewsData) => Promise<{ success: boolean; message?: string }>;
-  updateNews: (id: number, data: CreateNewsData) => Promise<{ success: boolean; message?: string }>;
+  createNews: (
+    data: CreateNewsData
+  ) => Promise<{ success: boolean; message?: string }>;
+  updateNews: (
+    id: number,
+    data: CreateNewsData
+  ) => Promise<{ success: boolean; message?: string }>;
   deleteNews: (id: number) => Promise<{ success: boolean; message?: string }>;
   publishNews: (id: number) => Promise<{ success: boolean; message?: string }>;
-  unpublishNews: (id: number) => Promise<{ success: boolean; message?: string }>;
+  unpublishNews: (
+    id: number
+  ) => Promise<{ success: boolean; message?: string }>;
 
   // Utility
   clearError: () => void;
@@ -126,7 +137,8 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
 
       setNewsList(response.data);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch news";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch news";
       setError(errorMessage);
       console.error("Get all news error:", err);
     } finally {
@@ -148,7 +160,8 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
 
       setCurrentNews(response.data);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch news";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch news";
       setError(errorMessage);
       console.error("Get news by ID error:", err);
     } finally {
@@ -158,7 +171,9 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Create news
-  const createNews = async (data: CreateNewsData): Promise<{ success: boolean; message?: string }> => {
+  const createNews = async (
+    data: CreateNewsData
+  ): Promise<{ success: boolean; message?: string }> => {
     try {
       setIsLoading(true);
       setError(null);
@@ -174,10 +189,11 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
 
       return {
         success: true,
-        message: response.message || "Berita berhasil dibuat",
+        message: response.message || "artikel berhasil dibuat",
       };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to create news";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to create news";
       setError(errorMessage);
       return {
         success: false,
@@ -190,7 +206,10 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Update news
-  const updateNews = async (id: number, data: CreateNewsData): Promise<{ success: boolean; message?: string }> => {
+  const updateNews = async (
+    id: number,
+    data: CreateNewsData
+  ): Promise<{ success: boolean; message?: string }> => {
     try {
       setIsLoading(true);
       setError(null);
@@ -206,10 +225,11 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
 
       return {
         success: true,
-        message: response.message || "Berita berhasil diperbarui",
+        message: response.message || "artikel berhasil diperbarui",
       };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update news";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to update news";
       setError(errorMessage);
       return {
         success: false,
@@ -222,7 +242,9 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Delete news
-  const deleteNews = async (id: number): Promise<{ success: boolean; message?: string }> => {
+  const deleteNews = async (
+    id: number
+  ): Promise<{ success: boolean; message?: string }> => {
     try {
       setIsLoading(true);
       setError(null);
@@ -233,14 +255,15 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
       });
 
       // Remove from local state
-      setNewsList(prev => prev.filter(n => n.id !== id));
+      setNewsList((prev) => prev.filter((n) => n.id !== id));
 
       return {
         success: true,
-        message: response.message || "Berita berhasil dihapus",
+        message: response.message || "artikel berhasil dihapus",
       };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to delete news";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to delete news";
       setError(errorMessage);
       return {
         success: false,
@@ -253,7 +276,9 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Publish news
-  const publishNews = async (id: number): Promise<{ success: boolean; message?: string }> => {
+  const publishNews = async (
+    id: number
+  ): Promise<{ success: boolean; message?: string }> => {
     try {
       setIsLoading(true);
       setError(null);
@@ -264,16 +289,17 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
       });
 
       // Update local state
-      setNewsList(prev =>
-        prev.map(n => n.id === id ? { ...n, is_published: true } : n)
+      setNewsList((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_published: true } : n))
       );
 
       return {
         success: true,
-        message: response.message || "Berita berhasil dipublikasikan",
+        message: response.message || "artikel berhasil dipublikasikan",
       };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to publish news";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to publish news";
       setError(errorMessage);
       return {
         success: false,
@@ -286,7 +312,9 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Unpublish news
-  const unpublishNews = async (id: number): Promise<{ success: boolean; message?: string }> => {
+  const unpublishNews = async (
+    id: number
+  ): Promise<{ success: boolean; message?: string }> => {
     try {
       setIsLoading(true);
       setError(null);
@@ -297,16 +325,17 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
       });
 
       // Update local state
-      setNewsList(prev =>
-        prev.map(n => n.id === id ? { ...n, is_published: false } : n)
+      setNewsList((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_published: false } : n))
       );
 
       return {
         success: true,
-        message: response.message || "Berita berhasil dibatalkan publikasinya",
+        message: response.message || "artikel berhasil dibatalkan publikasinya",
       };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to unpublish news";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to unpublish news";
       setError(errorMessage);
       return {
         success: false,

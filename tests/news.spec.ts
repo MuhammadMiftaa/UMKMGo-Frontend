@@ -14,21 +14,21 @@ test.describe("News Management", () => {
     test("should display news list", async ({ page }) => {
       await page.goto("/news");
       await expect(
-        page.getByRole("heading", { name: "Manajemen Berita" })
+        page.getByRole("heading", { name: "Manajemen artikel" })
       ).toBeVisible();
     });
 
     test("should have create button", async ({ page }) => {
       await page.goto("/news");
       await expect(
-        page.getByRole("button", { name: "Buat Berita" })
+        page.getByRole("button", { name: "Buat artikel" })
       ).toBeVisible();
     });
 
     test("should have search and filters", async ({ page }) => {
       await page.goto("/news");
       await expect(
-        page.getByPlaceholder("Cari judul atau isi berita...")
+        page.getByPlaceholder("Cari judul atau isi artikel...")
       ).toBeVisible();
     });
 
@@ -59,9 +59,9 @@ test.describe("News Management", () => {
     test("should display create news form", async ({ page }) => {
       await page.goto("/news/create");
       await expect(
-        page.getByRole("heading", { name: "Buat Berita" })
+        page.getByRole("heading", { name: "Buat artikel" })
       ).toBeVisible();
-      await expect(page.getByLabel("Judul Berita *")).toBeVisible();
+      await expect(page.getByLabel("Judul artikel *")).toBeVisible();
       // Use test ID for Select component
       await expect(
         page.locator('[data-testid="category-select"]')
@@ -71,14 +71,14 @@ test.describe("News Management", () => {
 
     test("should validate required fields", async ({ page }) => {
       await page.goto("/news/create");
-      await page.getByRole("button", { name: "Buat Berita" }).click();
+      await page.getByRole("button", { name: "Buat artikel" }).click();
     });
   });
 
   test.describe("News Detail", () => {
     test("should display news details", async ({ page }) => {
       await page.goto("/news/1");
-      await expect(page.getByText("Detail Berita")).toBeVisible();
+      await expect(page.getByText("Detail artikel")).toBeVisible();
     });
 
     test("should have edit and delete buttons", async ({ page }) => {

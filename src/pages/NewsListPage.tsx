@@ -69,7 +69,7 @@ export function NewsListPage() {
 
   const handleDelete = async (id: number, title: string) => {
     showConfirmAlert({
-      message: `Apakah Anda yakin ingin menghapus berita "${title}"? Tindakan ini tidak dapat dibatalkan.`,
+      message: `Apakah Anda yakin ingin menghapus artikel "${title}"? Tindakan ini tidak dapat dibatalkan.`,
       confirmText: "Ya, Hapus",
       cancelText: "Batal",
       onConfirm: async () => {
@@ -78,12 +78,12 @@ export function NewsListPage() {
           const result = await deleteNews(id);
 
           if (result.success) {
-            showSuccessToast("Berita berhasil dihapus");
+            showSuccessToast("artikel berhasil dihapus");
           } else {
-            showErrorToast(result.message || "Gagal menghapus berita");
+            showErrorToast(result.message || "Gagal menghapus artikel");
           }
         } catch (error) {
-          showErrorToast("Terjadi kesalahan saat menghapus berita");
+          showErrorToast("Terjadi kesalahan saat menghapus artikel");
         } finally {
           setActionLoading(null);
         }
@@ -99,7 +99,7 @@ export function NewsListPage() {
     const action = isPublished ? "membatalkan publikasi" : "mempublikasikan";
 
     showConfirmAlert({
-      message: `Apakah Anda yakin ingin ${action} berita "${title}"?`,
+      message: `Apakah Anda yakin ingin ${action} artikel "${title}"?`,
       confirmText: `Ya, ${isPublished ? "Batalkan" : "Publikasikan"}`,
       cancelText: "Batal",
       onConfirm: async () => {
@@ -111,13 +111,13 @@ export function NewsListPage() {
 
           if (result.success) {
             showSuccessToast(
-              `Berita berhasil ${isPublished ? "dibatalkan publikasinya" : "dipublikasikan"}`
+              `artikel berhasil ${isPublished ? "dibatalkan publikasinya" : "dipublikasikan"}`
             );
           } else {
-            showErrorToast(result.message || `Gagal ${action} berita`);
+            showErrorToast(result.message || `Gagal ${action} artikel`);
           }
         } catch (error) {
-          showErrorToast(`Terjadi kesalahan saat ${action} berita`);
+          showErrorToast(`Terjadi kesalahan saat ${action} artikel`);
         } finally {
           setActionLoading(null);
         }
@@ -140,16 +140,16 @@ export function NewsListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Manajemen Berita
+            Manajemen artikel
           </h1>
           <p className="text-muted-foreground">
-            Kelola berita, pengumuman, dan konten untuk UMKM
+            Kelola artikel, pengumuman, dan konten untuk UMKM
           </p>
         </div>
         {user?.permissions?.includes(Permissions.CREATE_NEWS) && (
           <Button onClick={() => navigate("/news/create")}>
             <Plus className="h-4 w-4 mr-2" />
-            Buat Berita
+            Buat artikel
           </Button>
         )}
       </div>
@@ -162,7 +162,7 @@ export function NewsListPage() {
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Cari judul atau isi berita..."
+                  placeholder="Cari judul atau isi artikel..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"
@@ -340,7 +340,7 @@ export function NewsListPage() {
           <Card>
             <CardContent className="p-12 text-center">
               <p className="text-muted-foreground">
-                Tidak ada berita yang ditemukan.
+                Tidak ada artikel yang ditemukan.
               </p>
             </CardContent>
           </Card>
