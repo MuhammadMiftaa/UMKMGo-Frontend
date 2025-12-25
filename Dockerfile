@@ -27,4 +27,8 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 80
+
+# This will generate env.js before starting nginx
+ENTRYPOINT ["/entrypoint.sh"]
+
 CMD ["nginx", "-g", "daemon off;"]
